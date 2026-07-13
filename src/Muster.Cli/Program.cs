@@ -26,6 +26,7 @@ public static class Program
         root.Subcommands.Add(DiffCommand.Create());
         root.Subcommands.Add(ConvertCommand.Create());
         root.Subcommands.Add(ReportCommand.Create());
+        root.Subcommands.Add(PromoteCommand.Create());
         return root;
     }
 }
