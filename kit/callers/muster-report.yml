@@ -1,0 +1,12 @@
+# kit/callers/muster-report.yml — data repos copy this to .github/workflows/muster-report.yml
+name: Muster bug reports
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created]
+jobs:
+  report:
+    uses: WarHub/muster/.github/workflows/report-check.yml@main
+    with:
+      data-source: "github:BSData/wh40k-11e" # ← repo-specific: your org/repo[@ref]

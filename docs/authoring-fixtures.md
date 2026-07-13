@@ -1,5 +1,10 @@
 # Authoring golden-roster fixtures
 
+> Fixtures aren't only hand-authored — `/muster promote` on a confirmed bug report writes
+> one for you, pinned to the engine's current values. See
+> [`docs/executable-bug-reports.md`](executable-bug-reports.md) for the issue-form → report
+> → promote flow that produces regression fixtures from real bug reports.
+
 A **fixture** is a battlescribe-spec roster DSL YAML file that drives wham's
 roster engine against real (or inline) game data and asserts on the
 resulting roster state. `muster test` discovers every `*.yaml` file under a

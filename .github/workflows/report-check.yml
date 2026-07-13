@@ -1,0 +1,154 @@
+name: Muster report check
+
+# Reusable workflow (workflow_call). Data repos install this via the thin caller stub in
+# kit/callers/muster-report.yml.
+#
+# IMPLEMENTATION NOTE (deviation from the original M3 plan draft): the muster image
+# (ghcr.io/warhub/muster:latest, see Dockerfile) is dotnet-runtime + git ONLY — it has no
+# `gh` CLI and no `python3`. An earlier draft of this workflow ran every step, including
+# `gh`/label/PR steps, inside `container: ghcr.io/warhub/muster:latest`, which cannot work.
+# Both jobs below instead run as plain `runs-on: ubuntu-latest` (gh CLI + jq preinstalled,
+# GH_TOKEN available) and invoke the muster image explicitly via `docker run`, mounting the
+# checkout the same way the docker-action (action.yml) itself does. Only the muster
+# invocation itself runs inside the container; every gh/label/PR step runs on the runner.
+
+on:
+  workflow_call:
+    inputs:
+      data-path:
+        type: string
+        default: "."
+      data-source:
+        type: string
+        description: dataSource URI matching the repo's fixtures (e.g. github:BSData/wh40k-11e)
+        required: true
+      engines:
+        type: string
+        default: "wham"
+      governing:
+        type: string
+        default: "newrecruit battlescribe wham"
+      fixtures-out:
+        type: string
+        default: "tests/rosters"
+
+permissions:
+  issues: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  evaluate:
+    if: >
+      github.event_name == 'issues' ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '/muster check'))
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Save issue body
+        env:
+          BODY: ${{ github.event.issue.body }}
+        run: |
+          mkdir -p .muster
+          printf '%s' "$BODY" > .muster/issue-body.md
+
+      - name: Evaluate report
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" -w /workspace \
+            --entrypoint /entrypoint.sh \
+            ghcr.io/warhub/muster:latest \
+            report "${{ inputs.data-path }}" ".muster/issue-body.md" \
+            "${{ inputs.data-source }}" "${{ inputs.engines }}" "${{ inputs.governing }}" .
+
+      - name: Find previous reply
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body-includes: "<!-- muster:report -->"
+
+      - name: Post reply
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.issue.number }}
+          body-path: reply.md
+          edit-mode: replace
+
+      - name: Apply labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          for label in confirmed not-reproducible needs-info inconclusive engine-gap; do
+            color=$(case "$label" in
+              confirmed) echo d73a4a ;;
+              not-reproducible) echo 0e8a16 ;;
+              needs-info) echo fbca04 ;;
+              inconclusive) echo d4c5f9 ;;
+              engine-gap) echo 5319e7 ;;
+            esac)
+            gh label create "$label" --force --color "$color" -R "$GITHUB_REPOSITORY" || true
+          done
+
+          labels=$(jq -r '.labels | join(",")' report.json)
+          current=$(gh issue view "$ISSUE" -R "$GITHUB_REPOSITORY" --json labels \
+            -q '[.labels[].name] | map(select(. == "confirmed" or . == "not-reproducible" or . == "needs-info" or . == "inconclusive" or . == "engine-gap")) | join(",")')
+          [ -n "$current" ] && gh issue edit "$ISSUE" -R "$GITHUB_REPOSITORY" --remove-label "$current" || true
+          [ -n "$labels" ] && gh issue edit "$ISSUE" -R "$GITHUB_REPOSITORY" --add-label "$labels" || true
+
+  promote:
+    if: github.event_name == 'issue_comment' && contains(github.event.comment.body, '/muster promote')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check commenter permission
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          perm=$(gh api "repos/$GITHUB_REPOSITORY/collaborators/${{ github.event.comment.user.login }}/permission" -q .permission)
+          case "$perm" in
+            admin|write|maintain) ;;
+            *)
+              gh issue comment "${{ github.event.issue.number }}" -R "$GITHUB_REPOSITORY" \
+                -b "Sorry @${{ github.event.comment.user.login }}, promotion needs write access."
+              exit 1
+              ;;
+          esac
+
+      - uses: actions/checkout@v4
+
+      - name: Fetch comments and issue body
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .muster
+          gh api "repos/$GITHUB_REPOSITORY/issues/${{ github.event.issue.number }}/comments" --paginate > .muster/comments.json
+          gh api "repos/$GITHUB_REPOSITORY/issues/${{ github.event.issue.number }}" -q .body > .muster/issue-body.md
+
+      - name: Promote
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" -w /workspace \
+            --entrypoint /entrypoint.sh \
+            ghcr.io/warhub/muster:latest \
+            promote "${{ inputs.data-path }}" ".muster/issue-body.md" ".muster/comments.json" \
+            "${{ inputs.data-source }}" "${{ github.event.issue.number }}" "${{ inputs.fixtures-out }}" \
+            "${{ inputs.engines }}" "${{ inputs.governing }}"
+
+      - name: Open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        run: |
+          git config user.name "muster-bot"
+          git config user.email "muster@users.noreply.github.com"
+          branch="muster/promote-issue-$ISSUE"
+          git checkout -b "$branch"
+          git add "${{ inputs.fixtures-out }}"
+          git commit -m "test: promote issue #$ISSUE roster to golden fixture"
+          git push origin "$branch"
+          gh pr create -R "$GITHUB_REPOSITORY" --head "$branch" \
+            --title "Promote issue #$ISSUE roster to golden fixture" \
+            --body "Promotes the reproducing roster from #$ISSUE to ${{ inputs.fixtures-out }}/. Review the pinned expected values — they were captured from the current (post-fix) engine evaluation. Closes #$ISSUE."

@@ -1,0 +1,45 @@
+name: Report a data bug
+description: Report wrong points, missing options, or broken constraints. Your roster makes the bug reproducible.
+title: "[data bug]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Muster will automatically evaluate your roster against the latest data
+        and reply with what the engines actually compute.
+  - type: input
+    id: roster
+    attributes:
+      label: Roster
+      description: >
+        A New Recruit share link (https://www.newrecruit.eu/app/list/…), OR drag
+        a .rosz file into the field below, OR paste fixture YAML in the details field.
+        (GitHub may require zipping a .ros/.rosz file to accept it as an attachment —
+        rename the zip's extension back to .rosz/.ros if it gets renamed to .zip.)
+      placeholder: "https://www.newrecruit.eu/app/list/abc12"
+    validations:
+      required: false
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What does the app show? (Muster echoes this back — markers must stay)
+      placeholder: "Outriders Squad 6 members - 145 points"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should it show, per the printed rules?
+      placeholder: "Outriders Squad 6 members - 140 points"
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Attachments / inline spec
+      description: "Drop a .rosz here (GitHub may require zipping it), or paste a ```yaml steps block."
+    validations:
+      required: false
