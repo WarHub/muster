@@ -13,6 +13,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Muster.Cli\Muster.Cli.csproj" />
+    <!-- Build-order-only: ensures Muster.TestAdapter is built as a prerequisite so its output
+         dll exists under artifacts/bin/ before tests run (tests spawn it as a subprocess via
+         its path, never reference its types). ReferenceOutputAssembly=false avoids pulling in
+         its compiled types, which would collide with the local Fakes/FakeRosterEngine.cs
+         (linked into both projects) under CS0436. -->
+    <ProjectReference Include="..\Muster.TestAdapter\Muster.TestAdapter.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>
