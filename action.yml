@@ -1,0 +1,22 @@
+name: "Muster"
+description: "Your data passes muster — golden-roster CI for wargame data repos."
+inputs:
+  fixtures-path:
+    description: "Fixtures directory"
+    default: "tests/rosters"
+  data-path:
+    description: "Data root"
+    default: "."
+  base-ref:
+    description: "Base git ref for blast-radius diff (empty = plain test)"
+    default: ""
+outputs:
+  report-path:
+    description: "Path to muster-report.md"
+runs:
+  using: docker
+  image: docker://ghcr.io/warhub/muster:latest
+  args:
+    - "${{ inputs.data-path }}"
+    - "${{ inputs.fixtures-path }}"
+    - "${{ inputs.base-ref }}"

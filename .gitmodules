@@ -1,0 +1,3 @@
+[submodule "lib/wham"]
+	path = lib/wham
+	url = https://github.com/WarHub/wham.git

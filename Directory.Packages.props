@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <PackageVersion Include="System.CommandLine" Version="2.0.3" />
+  </ItemGroup>
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" PrivateAssets="all" />
+    <PackageVersion Include="coverlet.collector" Version="8.0.0" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

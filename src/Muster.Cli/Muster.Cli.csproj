@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>muster</AssemblyName>
+    <RootNamespace>Muster.Cli</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>muster</ToolCommandName>
+    <PackageId>WarHub.Muster</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+    <ProjectReference Include="..\..\lib\wham\src\WarHub.ArmouryModel.RosterEngine.Spec\WarHub.ArmouryModel.RosterEngine.Spec.csproj" />
+    <ProjectReference Include="..\..\lib\wham\lib\battlescribe-spec\src\BattleScribeSpec.TestKit\BattleScribeSpec.TestKit.csproj" />
+  </ItemGroup>
+
+</Project>
