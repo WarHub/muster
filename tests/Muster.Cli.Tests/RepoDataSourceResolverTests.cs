@@ -1,6 +1,7 @@
 using BattleScribeSpec;
 using BattleScribeSpec.Roster;
 using Muster.Cli.Fixtures;
+using Muster.Cli.Tests.Fakes;
 using Xunit;
 
 namespace Muster.Cli.Tests;
@@ -96,7 +97,7 @@ public class RepoDataSourceResolverTests
               - expectedState: {}
             """);
 
-        var engine = new FakeEngine();
+        var engine = new FakeRosterEngine();
         var runner = new RosterRunner(engine, RepoDataSourceResolver.Create(dataDir), engineName: "wham");
 
         runner.Run(spec);
@@ -153,64 +154,5 @@ public class RepoDataSourceResolverTests
         Assert.False(RepoDataSourceResolver.IsPopulatedFor(dataDir, "not-a-valid-uri"));
         Assert.False(RepoDataSourceResolver.IsPopulatedFor(dataDir, "ftp:some/unsupported/scheme"));
         Assert.False(RepoDataSourceResolver.IsPopulatedFor(dataDir, ""));
-    }
-
-    /// <summary>
-    /// Minimal <see cref="IRosterEngine"/> fake, mirroring the pattern used by
-    /// <c>RunnerAndProtocolRegressionTests.FakeEngine</c> in the wham battlescribe-spec
-    /// TestKit's own regression tests. Only <see cref="SetupFromFiles"/> and the state
-    /// getters matter for this test; every other action member either isn't reached
-    /// (no action steps in the fixture) or would throw if it were.
-    /// </summary>
-    private sealed class FakeEngine : IRosterEngine
-    {
-        public List<(string FileName, string Content)>? ReceivedFiles { get; private set; }
-
-        public IReadOnlyList<string> Setup(BattleScribeSpec.Protocol.ProtocolGameSystem gameSystem, BattleScribeSpec.Protocol.ProtocolCatalogue[] catalogues) =>
-            throw new NotSupportedException("Not exercised: this test uses dataSource setup, not inline setup.");
-
-        public ActionOutputs AddForce(string forceEntryId, string catalogueId) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public ActionOutputs AddChildForce(string parentForceId, string forceEntryId, string catalogueId) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public void RemoveForce(string forceId) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public ActionOutputs SelectEntry(string forceId, string entryId) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public ActionOutputs SelectChildEntry(string forceId, string parentSelectionId, string entryId) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public void DeselectSelection(string forceId, string selectionId) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public void SetSelectionCount(string forceId, string selectionId, int count) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public ActionOutputs DuplicateSelection(string forceId, string selectionId) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public ActionOutputs DuplicateForce(string forceId) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public void SetCostLimit(string costTypeId, decimal value) =>
-            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
-
-        public RosterState GetRosterState() => new("roster", "gs", [], [], []);
-
-        public IReadOnlyList<ValidationErrorState> GetValidationErrors() => [];
-
-        public IReadOnlyList<string> SetupFromFiles(IReadOnlyList<(string FileName, string Content)> files)
-        {
-            ReceivedFiles = [.. files];
-            return [];
-        }
-
-        public void Dispose()
-        {
-        }
     }
 }
