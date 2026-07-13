@@ -7,6 +7,12 @@ on:
     types: [created]
 jobs:
   report:
+    # A caller must grant every permission the reusable workflow requests, or the
+    # run dies with startup_failure ("requesting X but only allowed Y").
+    permissions:
+      issues: write
+      contents: write
+      pull-requests: write
     uses: WarHub/muster/.github/workflows/report-check.yml@main
     with:
       data-source: "github:BSData/wh40k-11e" # ← repo-specific: your org/repo[@ref]
