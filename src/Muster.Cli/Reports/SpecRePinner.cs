@@ -20,7 +20,13 @@ public static partial class SpecRePinner
     // load-bearing for RewriteWithPins' text-surgery: everything from this line to EOF in a
     // muster-emitted snapshot is exactly the trailing expectedState-only step, so dropping from
     // here is a deterministic way to strip stale pins without a full YAML re-emit.
-    private const string ObservedValuesMarker = "# observed values from the report";
+    //
+    // Line-anchored (^\s*...$ with Multiline) so that a quoted scalar field (e.g. an
+    // attacker-controlled roster customName) containing this text mid-line can never match: a
+    // quoted step field sits inline within a `key: "..."` line, never as a standalone comment
+    // line, and SpecEmitter.Quote escapes embedded newlines so it can't fake one either.
+    [GeneratedRegex(@"^\s*# observed values from the report.*$", RegexOptions.Multiline)]
+    private static partial Regex ObservedValuesMarkerPattern();
 
     [GeneratedRegex(@"^id:.*$", RegexOptions.Multiline)]
     private static partial Regex IdLinePattern();
@@ -76,7 +82,7 @@ public static partial class SpecRePinner
     /// <summary>
     /// Text-level rewrite of <paramref name="specYaml"/>: replaces the top-level <c>id:</c> line
     /// with <paramref name="newSpecId"/>, drops any existing observed-value pin block (recognized
-    /// by <see cref="ObservedValuesMarker"/>; falls back to append-only when absent), and appends
+    /// by <see cref="ObservedValuesMarkerPattern"/>; falls back to append-only when absent), and appends
     /// a fresh <c>expectedState.costs</c> block pinned to <paramref name="costs"/>. The result is
     /// validated with <see cref="SpecLoader.LoadFromYaml(string, string?)"/> before being
     /// returned — a rewrite that fails to parse is a harness error, never a silently written
@@ -87,11 +93,10 @@ public static partial class SpecRePinner
     {
         var text = IdLinePattern().Replace(specYaml, $"id: {Quote(newSpecId)}", count: 1);
 
-        var markerIndex = text.IndexOf(ObservedValuesMarker, StringComparison.Ordinal);
-        if (markerIndex >= 0)
+        var markerMatch = ObservedValuesMarkerPattern().Match(text);
+        if (markerMatch.Success)
         {
-            var lineStart = text.LastIndexOf('\n', Math.Max(markerIndex - 1, 0)) + 1;
-            text = text[..lineStart];
+            text = text[..markerMatch.Index];
         }
 
         text = text.TrimEnd('\n', '\r') + "\n";
