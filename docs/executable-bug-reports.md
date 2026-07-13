@@ -112,7 +112,7 @@ match.
 By default, the promotion PR is opened with `GITHUB_TOKEN` and GitHub will not run workflows on it
 (a documented GitHub Actions limitation). If you want the promotion PR to automatically trigger
 your CI checks, provide a PAT (personal access token) or GitHub App installation token as the
-optional `pr-token` secret:
+optional `pr_token` secret:
 
 ```yaml
 jobs:
@@ -121,7 +121,7 @@ jobs:
     with:
       data-source: "github:YourOrg/your-data-repo"
     secrets:
-      pr-token: ${{ secrets.MUSTER_PR_TOKEN }}
+      pr_token: ${{ secrets.MUSTER_PR_TOKEN }}
 ```
 
 Without this token, you can still run workflows manually by closing and re-opening the PR or by

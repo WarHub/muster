@@ -32,7 +32,7 @@ on:
         type: string
         default: "tests/rosters"
     secrets:
-      pr-token:
+      pr_token:
         description: Token used to open the promotion PR. Pass a PAT or GitHub App installation token so the PR triggers workflows; defaults to github.token (PR checks will NOT auto-run).
         required: false
 
@@ -171,7 +171,7 @@ jobs:
 
       - name: Open PR
         env:
-          GH_TOKEN: ${{ secrets.pr-token || github.token }}
+          GH_TOKEN: ${{ secrets.pr_token || github.token }}
           ISSUE: ${{ github.event.issue.number }}
         run: |
           git config user.name "muster-bot"
