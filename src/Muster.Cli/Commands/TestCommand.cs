@@ -57,33 +57,7 @@ public static class TestCommand
     {
         try
         {
-            if (!data.Exists)
-            {
-                return Inconclusive($"data directory not found: {data.FullName}");
-            }
-
-            if (!fixtures.Exists)
-            {
-                return Inconclusive($"fixtures directory not found: {fixtures.FullName}");
-            }
-
-            var fixturePaths = Directory
-                .EnumerateFiles(fixtures.FullName, "*.yaml", SearchOption.AllDirectories)
-                .OrderBy(path => path, StringComparer.Ordinal)
-                .ToList();
-            if (fixturePaths.Count == 0)
-            {
-                return Inconclusive("no fixtures found");
-            }
-
-            var resolver = RepoDataSourceResolver.Create(data.FullName);
-            var results = new List<FixtureResult>(fixturePaths.Count);
-            foreach (var path in fixturePaths)
-            {
-                results.Add(RunFixture(path, data.FullName, resolver));
-            }
-
-            var runReport = RunReport.Create(EngineName, data.FullName, results);
+            var runReport = RunFixtures(data.FullName, fixtures.FullName);
             RunReport.Write(runReport, output, Console.Out);
             if (report is not null)
             {
@@ -92,10 +66,54 @@ public static class TestCommand
 
             return runReport.Failed > 0 ? 1 : runReport.Inconclusive > 0 ? 2 : 0;
         }
+        catch (HarnessInconclusiveException ex)
+        {
+            return Inconclusive(ex.Message);
+        }
         catch (Exception ex)
         {
             return Inconclusive($"harness error: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Runs every fixture under <paramref name="fixturesDir"/> against <paramref name="dataDir"/>
+    /// and returns the aggregate <see cref="RunReport"/>. Shared by <see cref="TestCommand"/> and
+    /// <c>DiffCommand</c> so both commands evaluate fixtures identically.
+    /// </summary>
+    /// <exception cref="HarnessInconclusiveException">
+    /// Thrown for harness-level (not per-fixture) problems: a missing data or fixtures
+    /// directory, or a fixtures directory with no <c>*.yaml</c> fixtures in it.
+    /// </exception>
+    internal static RunReport RunFixtures(string dataDir, string fixturesDir)
+    {
+        if (!Directory.Exists(dataDir))
+        {
+            throw new HarnessInconclusiveException($"data directory not found: {dataDir}");
+        }
+
+        if (!Directory.Exists(fixturesDir))
+        {
+            throw new HarnessInconclusiveException($"fixtures directory not found: {fixturesDir}");
+        }
+
+        var fixturePaths = Directory
+            .EnumerateFiles(fixturesDir, "*.yaml", SearchOption.AllDirectories)
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .ToList();
+        if (fixturePaths.Count == 0)
+        {
+            throw new HarnessInconclusiveException("no fixtures found");
+        }
+
+        var resolver = RepoDataSourceResolver.Create(dataDir);
+        var results = new List<FixtureResult>(fixturePaths.Count);
+        foreach (var path in fixturePaths)
+        {
+            results.Add(RunFixture(path, dataDir, resolver));
+        }
+
+        return RunReport.Create(EngineName, dataDir, results);
     }
 
     private static FixtureResult RunFixture(string path, string dataDir, DataSourceResolver resolver)
@@ -158,3 +176,9 @@ public static class TestCommand
         return 2;
     }
 }
+
+/// <summary>
+/// Signals a harness-level problem with a fixture run (missing data/fixtures directory,
+/// no fixtures found) as opposed to a per-fixture pass/fail/inconclusive result.
+/// </summary>
+internal sealed class HarnessInconclusiveException(string message) : Exception(message);

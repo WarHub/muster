@@ -12,6 +12,7 @@ public static class Program
     {
         var root = new RootCommand("muster — your data passes muster. CI toolchain for wargame data repos.");
         root.Subcommands.Add(TestCommand.Create());
+        root.Subcommands.Add(DiffCommand.Create());
         return root;
     }
 }
