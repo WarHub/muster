@@ -104,11 +104,13 @@ Muster config (`muster.yml` in the data repo, or CLI/Action input) maps engine n
 - `battlescribe` — the **legacy oracle**: battlescribe-spec's `ReferenceAdapter` (IKVM-wrapped proprietary BattleScribe JARs). Historical reference semantics; second in default precedence.
 - `wham` — builtin, in-proc via `SpecRosterEngineAdapter`; always available and the only engine guaranteed in the public image. **Not yet compliant enough to be the assertion reference** — it informs, catches regressions cheaply, and its divergences from the governor feed its own conformance backlog.
 
-Adapter commands are registered as `dotnet:<path>` (or any executable), spawned per run via TestKit's `AdapterProcess`.
+Adapter commands are registered as `dotnet:<path>`, any executable, or `docker:<image>` (runs `docker run -i --rm <image>`; the NDJSON protocol flows over stdio unchanged), spawned per run via TestKit's `AdapterProcess`.
+
+**NR adapter distribution (decided):** `BattleScribeSpec.NewRecruit` ships as a **public Docker image** (Playwright + browser baked in), published by battlescribe-spec's CI the same way muster publishes its own image — binaries only, no repo sources, and no JAR encumbrance exists for this adapter. CI callers register it as `docker:ghcr.io/warhub/bsspec-adapter-newrecruit:latest`; GitHub's container-action Docker-socket mount makes this reachable from the muster Action (verify the socket path during implementation; fall back to running the adapter as a workflow service container if not). The `battlescribe` oracle can never ship this way — its image would redistribute the proprietary JARs.
 
 Availability detection: an engine is *available* when builtin or its adapter command resolves and starts. Requested-but-unavailable engines appear in output as `unavailable` — named, never silently dropped. Default engine set: all available.
 
-**Licensing boundary (hard):** nothing in muster's public artifacts may embed or download the proprietary BattleScribe JARs — the `battlescribe` adapter exists only where the private battlescribe-spec checkout is present (WarHub-hosted workflows via the bot app token; maintainers with access, locally). The NR adapter has no JAR encumbrance, only private-repo residency: whether it ships as a package/tool consumable by public workflows is an open question (below); until resolved, the public image guarantees wham only.
+**Licensing boundary (hard):** nothing in muster's public artifacts may embed or download the proprietary BattleScribe JARs — the `battlescribe` adapter exists only where the private battlescribe-spec checkout is present (WarHub-hosted workflows via the bot app token; maintainers with access, locally). The NR adapter has no JAR encumbrance, only private-repo residency, and ships as a public Docker image (above); the muster image itself still guarantees wham only.
 
 ### Governing-engine rule
 
@@ -147,5 +149,5 @@ Remaining hardening backlog: per-fixture setup perf (shared compilation cache), 
 1. Does battlescribe-spec `expectedState` support roster-level total-cost assertions today? Verify at plan time; extend additively if not.
 2. `.rosz` attachment friction: GitHub issue attachments may reject the extension (zip rename workaround) — document in the form's help text; verify while building the template.
 3. Promotion slug collisions (`tests/rosters/<slug>.yaml` exists) — suffix with issue number; confirm during implementation.
-4. NR adapter distribution: can `BattleScribeSpec.NewRecruit` ship as a public package/tool (no JARs involved), so non-WarHub repos can run the default governor? Decide at plan time; affects how `engines` defaults behave outside WarHub-hosted workflows.
-5. NR adapter runtime cost in CI (Playwright + browser in the container or a composite step) — measure during implementation; full-sweep `test`/`diff` with NR may need an opt-in or fixture-count guard.
+4. ~~NR adapter distribution~~ — resolved: public Docker image published from battlescribe-spec CI (see §5); non-WarHub repos get the default governor by registering `docker:ghcr.io/warhub/bsspec-adapter-newrecruit:latest`.
+5. NR adapter runtime cost in CI — the prebuilt image removes Playwright install cost; browser-session cost per spec remains. Measure during implementation; full-sweep `test`/`diff` with NR may need an opt-in or fixture-count guard.
