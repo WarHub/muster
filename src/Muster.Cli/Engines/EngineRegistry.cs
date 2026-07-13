@@ -114,6 +114,8 @@ public static class EngineRegistry
         public IReadOnlyList<ValidationErrorState> GetValidationErrors() =>
             _engine.GetValidationErrors();
 
+        public void Cleanup() => ((IRosterEngine)_engine).Cleanup();
+
         public void Dispose()
         {
             _engine.Dispose();
