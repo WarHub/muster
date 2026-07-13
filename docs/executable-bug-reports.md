@@ -107,6 +107,26 @@ match.
   Human correctness review happens exactly once, on that PR — reviewing the pinned expected
   values is reviewing "is this actually correct now," same as any fixture.
 
+## Promotion PRs and CI checks
+
+By default, the promotion PR is opened with `GITHUB_TOKEN` and GitHub will not run workflows on it
+(a documented GitHub Actions limitation). If you want the promotion PR to automatically trigger
+your CI checks, provide a PAT (personal access token) or GitHub App installation token as the
+optional `pr-token` secret:
+
+```yaml
+jobs:
+  report:
+    uses: WarHub/muster/.github/workflows/report-check.yml@main
+    with:
+      data-source: "github:YourOrg/your-data-repo"
+    secrets:
+      pr-token: ${{ secrets.MUSTER_PR_TOKEN }}
+```
+
+Without this token, you can still run workflows manually by closing and re-opening the PR or by
+pushing to its branch.
+
 ## Engines and governing precedence
 
 Both the `evaluate` and `promote` jobs accept `engines`/`governing` inputs on the reusable

@@ -10,3 +10,5 @@ jobs:
     uses: WarHub/muster/.github/workflows/report-check.yml@main
     with:
       data-source: "github:BSData/wh40k-11e" # ← repo-specific: your org/repo[@ref]
+    # secrets:
+    #   pr-token: ${{ secrets.MUSTER_PR_TOKEN }}  # optional: lets the promotion PR trigger CI checks
