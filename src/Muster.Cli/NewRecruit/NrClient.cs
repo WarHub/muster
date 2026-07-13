@@ -54,13 +54,17 @@ public sealed class NrClient(HttpMessageHandler? handler = null) : IDisposable
                 return new(null, "New Recruit returned an unexpected response");
             return new(text, null);
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             return new(null, "New Recruit did not respond within 30 seconds");
         }
         catch (HttpRequestException e)
         {
             return new(null, $"could not reach New Recruit: {e.Message}");
+        }
+        catch (IOException e)
+        {
+            return new(null, $"connection to New Recruit failed: {e.Message}");
         }
     }
 
