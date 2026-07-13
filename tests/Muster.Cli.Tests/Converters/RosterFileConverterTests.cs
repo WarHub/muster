@@ -82,4 +82,90 @@ public class RosterFileConverterTests
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("<not-a-roster/>"));
         Assert.Throws<FormatException>(() => RosterFileConverter.Convert(stream, "x.ros"));
     }
+
+    // Second force ("Second Force") deliberately omits entryId.
+    private const string RosterXmlWithOneBadForce = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <roster id="r-1" name="Test Roster" battleScribeVersion="2.03"
+                gameSystemId="gs-1" gameSystemName="Test GS" gameSystemRevision="1"
+                xmlns="http://www.battlescribe.net/schema/rosterSchema">
+          <forces>
+            <force id="f-1" name="Patrol" entryId="fe-1" catalogueId="cat-1"
+                   catalogueRevision="1" catalogueName="Test Cat">
+              <selections>
+                <selection id="s-1" name="Deathmarks" entryId="link-1::se-1"
+                           number="1" type="unit"/>
+              </selections>
+            </force>
+            <force id="f-2" name="Second Force" catalogueId="cat-2"
+                   catalogueRevision="1" catalogueName="Test Cat 2">
+              <selections>
+                <selection id="s-3" name="Warriors" entryId="link-2::se-3"
+                           number="1" type="unit"/>
+              </selections>
+            </force>
+          </forces>
+        </roster>
+        """;
+
+    private const string RosterXmlWithOnlyBadForce = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <roster id="r-1" name="Test Roster" battleScribeVersion="2.03"
+                gameSystemId="gs-1" gameSystemName="Test GS" gameSystemRevision="1"
+                xmlns="http://www.battlescribe.net/schema/rosterSchema">
+          <forces>
+            <force id="f-1" name="Only Force" catalogueId="cat-1"
+                   catalogueRevision="1" catalogueName="Test Cat">
+              <selections>
+                <selection id="s-1" name="Deathmarks" entryId="link-1::se-1"
+                           number="1" type="unit"/>
+              </selections>
+            </force>
+          </forces>
+        </roster>
+        """;
+
+    [Fact]
+    public void Force_with_no_entryId_is_skipped_with_Unmapped_note()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(RosterXmlWithOneBadForce));
+        var roster = RosterFileConverter.Convert(stream, "test.ros");
+
+        var force = Assert.Single(roster.Forces);
+        Assert.Equal("fe-1", force.ForceEntryId);
+        var note = Assert.Single(roster.Unmapped);
+        Assert.Contains("Second Force", note);
+    }
+
+    [Fact]
+    public void Roster_whose_only_force_has_no_entryId_throws_FormatException()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(RosterXmlWithOnlyBadForce));
+        var ex = Assert.Throws<FormatException>(() => RosterFileConverter.Convert(stream, "test.ros"));
+        Assert.Contains("no forces", ex.Message);
+    }
+
+    [Fact]
+    public void Rosz_that_decompresses_over_50MB_throws_FormatException_fast()
+    {
+        // A large run of compressible whitespace crushes down to a tiny compressed
+        // entry, but decompresses well past the 50 MB cap.
+        var padding = new string(' ', 60 * 1024 * 1024);
+        var xml = $"<?xml version=\"1.0\" encoding=\"UTF-8\"?><roster xmlns=\"http://www.battlescribe.net/schema/rosterSchema\">{padding}";
+
+        using var zipStream = new MemoryStream();
+        using (var zip = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            using var entry = zip.CreateEntry("test.ros", CompressionLevel.Optimal).Open();
+            entry.Write(Encoding.UTF8.GetBytes(xml));
+        }
+        zipStream.Position = 0;
+
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var ex = Assert.Throws<FormatException>(() => RosterFileConverter.Convert(zipStream, "test.rosz"));
+        sw.Stop();
+
+        Assert.Contains("too large", ex.Message);
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"took {sw.Elapsed}");
+    }
 }

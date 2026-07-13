@@ -57,6 +57,8 @@ public static class RosterFileConverter
             Unmapped: unmapped);
     }
 
+    private const int MaxDecompressedBytes = 50 * 1024 * 1024;
+
     private static RosterNode LoadZipped(Stream stream)
     {
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
@@ -66,12 +68,38 @@ public static class RosterFileConverter
                 $".rosz archive must contain exactly one entry, found {archive.Entries.Count}");
         }
         using var entryStream = archive.Entries[0].Open();
-        return BattleScribeXml.LoadRoster(entryStream)
+        using var bounded = ReadBounded(entryStream, MaxDecompressedBytes);
+        return BattleScribeXml.LoadRoster(bounded)
             ?? throw new FormatException("archive entry is not a BattleScribe roster");
     }
 
+    /// <summary>
+    /// Copies <paramref name="source"/> into an in-memory buffer, aborting as soon as
+    /// more than <paramref name="maxBytes"/> have been read. Guards against zip-bomb
+    /// .rosz entries that would otherwise decompress unbounded into memory.
+    /// </summary>
+    private static MemoryStream ReadBounded(Stream source, int maxBytes)
+    {
+        var buffer = new byte[81_920];
+        var result = new MemoryStream();
+        long total = 0;
+        int read;
+        while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            total += read;
+            if (total > maxBytes)
+            {
+                throw new FormatException(
+                    $"roster archive decompresses too large (over {maxBytes / (1024 * 1024)} MB)");
+            }
+            result.Write(buffer, 0, read);
+        }
+        result.Position = 0;
+        return result;
+    }
+
     private static ReplayForce ConvertForce(ForceNode force, ref int count, List<string> unmapped) => new(
-        ForceEntryId: force.EntryId ?? throw new FormatException($"force '{force.Name}' has no entryId"),
+        ForceEntryId: force.EntryId!,
         CatalogueId: force.CatalogueId ?? "",
         Selections: ConvertSelections(force.Selections, ref count, unmapped),
         ChildForces: ConvertForces(force.Forces, ref count, unmapped));
@@ -79,7 +107,17 @@ public static class RosterFileConverter
     private static List<ReplayForce> ConvertForces(IEnumerable<ForceNode> forces, ref int count, List<string> unmapped)
     {
         var result = new List<ReplayForce>();
-        foreach (var f in forces) result.Add(ConvertForce(f, ref count, unmapped));
+        foreach (var f in forces)
+        {
+            if (f.EntryId is null)
+            {
+                // No way to replay a force without an entryId — record structural
+                // drift and skip it rather than aborting the whole conversion.
+                unmapped.Add($"force '{f.Name}' has no entryId — skipped");
+                continue;
+            }
+            result.Add(ConvertForce(f, ref count, unmapped));
+        }
         return result;
     }
 
