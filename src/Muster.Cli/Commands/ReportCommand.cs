@@ -48,6 +48,12 @@ public static class ReportCommand
             Description = "Directory to write reply.md, report.json, and snapshot.yaml into.",
             DefaultValueFactory = _ => new DirectoryInfo("."),
         };
+        var previousReplyOption = new Option<FileInfo?>("--previous-reply")
+        {
+            Description = "Path to the previous sticky-comment reply body (if any). When this " +
+                "evaluation produces no spec of its own, the durable snapshot embedded in the " +
+                "previous reply is carried forward instead of being replaced with an empty one.",
+        };
 
         var command = new Command("report", "Evaluate a bug-report issue body and render a verdict reply.");
         command.Options.Add(issueBodyOption);
@@ -56,6 +62,7 @@ public static class ReportCommand
         command.Options.Add(enginesOption);
         command.Options.Add(governingOption);
         command.Options.Add(outDirOption);
+        command.Options.Add(previousReplyOption);
         command.SetAction((parse, ct) => Run(
             parse.GetValue(issueBodyOption)!,
             parse.GetValue(dataOption)!,
@@ -63,6 +70,7 @@ public static class ReportCommand
             parse.GetValue(enginesOption) ?? [],
             parse.GetValue(governingOption) ?? [],
             parse.GetValue(outDirOption),
+            parse.GetValue(previousReplyOption),
             ct));
 
         return command;
@@ -70,7 +78,8 @@ public static class ReportCommand
 
     internal static async Task<int> Run(
         FileInfo issueBody, DirectoryInfo data, string dataSource,
-        string[] engines, string[] governing, DirectoryInfo? outDir, CancellationToken ct = default)
+        string[] engines, string[] governing, DirectoryInfo? outDir, FileInfo? previousReply = null,
+        CancellationToken ct = default)
     {
         try
         {
@@ -165,8 +174,23 @@ public static class ReportCommand
                     inlineSpec = true;
                     try
                     {
-                        SpecLoader.LoadFromYaml(src.Value, defaultId: "report");
-                        specYaml = src.Value;
+                        var inline = SpecLoader.LoadFromYaml(src.Value, defaultId: "report");
+
+                        // Hermeticity: a hostile inline spec could declare its own
+                        // setup.dataSource (e.g. "local:/etc" or another repo's path) to make
+                        // the engine read arbitrary container-reachable paths instead of this
+                        // repository's data. A dataSource that doesn't match the one this
+                        // workflow is running against is rejected outright; an absent/empty
+                        // dataSource (a fully self-contained inline setup) is unaffected.
+                        if (inline.Setup.DataSource is { Length: > 0 } inlineDataSource
+                            && !string.Equals(inlineDataSource, dataSource, StringComparison.Ordinal))
+                        {
+                            error = "inline spec declares a dataSource that does not match this repository's data source";
+                        }
+                        else
+                        {
+                            specYaml = src.Value;
+                        }
                     }
                     catch (Exception e)
                     {
@@ -197,14 +221,32 @@ public static class ReportCommand
                 }
             }
 
+            // This evaluation produced no spec of its own (roster/spec conversion failed, or no
+            // roster was found at all). Sticky-comment replies are posted with edit-mode:
+            // replace on a SINGLE comment, so if we render an empty snapshot here it destroys
+            // the only durable copy of a spec captured by an earlier, successful evaluation —
+            // making promotion permanently impossible even after the report is fixed. Carry the
+            // previous reply's snapshot forward instead (never re-run engines against it here —
+            // it is stale by construction).
+            string? carriedYaml = null;
+            if (specYaml is null && previousReply is { Exists: true })
+            {
+                var previousBody = await File.ReadAllTextAsync(previousReply.FullName, ct);
+                carriedYaml = SnapshotExtractor.ExtractFromBody(previousBody);
+            }
+
+            var carriedForward = carriedYaml is not null;
+            var effectiveSpecYaml = specYaml ?? carriedYaml ?? "";
+
             var verdict = VerdictMapper.Map(roster, error, runs, inlineSpec);
-            var reply = ReplyRenderer.Render(verdict, roster, runs, specYaml ?? "", body.Problem, body.Expected);
+            var reply = ReplyRenderer.Render(
+                verdict, roster, runs, effectiveSpecYaml, body.Problem, body.Expected, carriedForward);
 
             await File.WriteAllTextAsync(Path.Combine(outDirPath, "reply.md"), reply, ct);
             await File.WriteAllTextAsync(Path.Combine(outDirPath, "report.json"), ToJson(verdict, runs), ct);
-            if (specYaml is not null)
+            if (effectiveSpecYaml.Length > 0)
             {
-                await File.WriteAllTextAsync(Path.Combine(outDirPath, "snapshot.yaml"), specYaml, ct);
+                await File.WriteAllTextAsync(Path.Combine(outDirPath, "snapshot.yaml"), effectiveSpecYaml, ct);
             }
 
             Console.Out.WriteLine(reply);

@@ -57,6 +57,27 @@ jobs:
           mkdir -p .muster
           printf '%s' "$BODY" > .muster/issue-body.md
 
+      - name: Find previous reply
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body-includes: "<!-- muster:report -->"
+
+      - name: Save previous reply body
+        # Sticky comment (Post reply, below) is posted with edit-mode: replace on this single
+        # comment. Handing the previous body to `muster report` (via --previous-reply) lets it
+        # carry the durable snapshot forward when this evaluation produces none of its own —
+        # otherwise a rotted NR link / re-edit would silently destroy the only stored snapshot,
+        # making promotion permanently impossible. Only written when a previous comment exists;
+        # entrypoint.sh treats a missing file as "no previous reply".
+        if: steps.fc.outputs.comment-id != ''
+        env:
+          PREV: ${{ steps.fc.outputs.comment-body }}
+        run: |
+          mkdir -p .muster
+          printf '%s' "$PREV" > .muster/previous-reply.md
+
       - name: Evaluate report
         run: |
           docker run --rm \
@@ -64,14 +85,21 @@ jobs:
             --entrypoint /entrypoint.sh \
             ghcr.io/warhub/muster:latest \
             report "${{ inputs.data-path }}" ".muster/issue-body.md" \
-            "${{ inputs.data-source }}" "${{ inputs.engines }}" "${{ inputs.governing }}" .
+            "${{ inputs.data-source }}" "${{ inputs.engines }}" "${{ inputs.governing }}" . \
+            .muster/previous-reply.md
 
-      - name: Find previous reply
-        uses: peter-evans/find-comment@v3
-        id: fc
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          body-includes: "<!-- muster:report -->"
+      - name: Notify reporter of harness error
+        # Evaluate report failing means the harness crashed outright (exit 1 from
+        # entrypoint.sh's report mode) -- silence otherwise, since no reply.md was ever
+        # produced for the sticky-comment step below to post. Plain issue comment, NEVER the
+        # sticky <!-- muster:report --> comment (that would need a real verdict to replace it
+        # with, which is exactly what we don't have here).
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment "${{ github.event.issue.number }}" -R "$GITHUB_REPOSITORY" \
+            -b "⚠ The muster harness hit an internal error evaluating this report. Maintainers have been notified — no action needed from you."
 
       - name: Post reply
         uses: peter-evans/create-or-update-comment@v4

@@ -25,7 +25,8 @@ public static partial class ReplyRenderer
     private static partial Regex CostFailurePattern();
 
     public static string Render(
-        Verdict verdict, ReplayRoster? roster, MultiRunReport? runs, string specYaml, string? problem, string? expected)
+        Verdict verdict, ReplayRoster? roster, MultiRunReport? runs, string specYaml, string? problem, string? expected,
+        bool carriedForwardSnapshot = false)
     {
         var sb = new StringBuilder();
         sb.Append("<!-- muster:report -->\n");
@@ -55,17 +56,29 @@ public static partial class ReplyRenderer
             sb.Append('\n');
         }
 
-        sb.Append("<details><summary>Executable spec (snapshot)</summary>\n");
-        sb.Append("<!-- muster:snapshot -->\n");
-        sb.Append('\n');
-        sb.Append("```yaml\n");
-        sb.Append(specYaml);
-        if (specYaml.Length > 0 && !specYaml.EndsWith('\n'))
+        // Never emit an empty ```yaml block: when there is no spec at all (neither freshly
+        // derived nor carried forward from a previous evaluation), omit the whole snapshot
+        // section rather than posting an empty, misleading <details> block.
+        if (specYaml.Length > 0)
         {
+            if (carriedForwardSnapshot)
+            {
+                sb.Append("> ⚠ The roster source is no longer reachable — snapshot preserved from a previous evaluation.\n");
+                sb.Append('\n');
+            }
+
+            sb.Append("<details><summary>Executable spec (snapshot)</summary>\n");
+            sb.Append("<!-- muster:snapshot -->\n");
             sb.Append('\n');
+            sb.Append("```yaml\n");
+            sb.Append(specYaml);
+            if (!specYaml.EndsWith('\n'))
+            {
+                sb.Append('\n');
+            }
+            sb.Append("```\n");
+            sb.Append("</details>\n");
         }
-        sb.Append("```\n");
-        sb.Append("</details>\n");
 
         return sb.ToString();
     }

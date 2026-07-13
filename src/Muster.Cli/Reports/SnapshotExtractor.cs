@@ -20,6 +20,27 @@ public static partial class SnapshotExtractor
     private static partial Regex SnapshotPattern();
 
     /// <summary>
+    /// Returns the fenced-yaml content of the <c>&lt;!-- muster:snapshot --&gt;</c> block in a
+    /// single comment body (e.g. the sticky report comment's current or previous text), or
+    /// <see langword="null"/> if the marker is absent.
+    /// </summary>
+    public static string? ExtractFromBody(string body)
+    {
+        if (string.IsNullOrEmpty(body))
+        {
+            return null;
+        }
+
+        if (body.Length > MaxBodyLength)
+        {
+            body = body[..MaxBodyLength];
+        }
+
+        var match = SnapshotPattern().Match(body);
+        return match.Success ? match.Groups[1].Value : null;
+    }
+
+    /// <summary>
     /// Returns the fenced-yaml content of the LAST comment (in array order) containing a
     /// <c>&lt;!-- muster:snapshot --&gt;</c> marker, or <see langword="null"/> if none is
     /// found or <paramref name="commentsJson"/> is not a well-formed JSON array.
@@ -63,15 +84,10 @@ public static partial class SnapshotExtractor
                     continue;
                 }
 
-                if (body.Length > MaxBodyLength)
+                var fromBody = ExtractFromBody(body);
+                if (fromBody is not null)
                 {
-                    body = body[..MaxBodyLength];
-                }
-
-                var match = SnapshotPattern().Match(body);
-                if (match.Success)
-                {
-                    latest = match.Groups[1].Value;
+                    latest = fromBody;
                 }
             }
 

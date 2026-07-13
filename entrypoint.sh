@@ -39,6 +39,10 @@ set -euo pipefail
 #   engines                (optional, default "wham")
 #   governing              (optional, default "newrecruit battlescribe wham")
 #   out-dir                (optional, default ".") — reply.md/report.json/snapshot.yaml land here.
+#   previous-reply-file    (optional) Path to the previous sticky-comment reply body, if any.
+#                          Forwarded as `--previous-reply` only when the path is non-empty AND
+#                          the file exists, so a missing/never-written file (no prior comment)
+#                          is silently treated as "no previous reply" rather than an error.
 #
 # Exit code: 0 always, EXCEPT a genuine harness error (muster report exit 2, meaning no
 # usable reply was produced at all) is surfaced as `::error::` + exit 1 — unlike test/diff
@@ -126,7 +130,7 @@ MODE="${1:-}"
 if [[ "$MODE" == "report" ]]; then
     shift
     if [[ $# -lt 3 ]]; then
-        echo "usage: entrypoint.sh report <data-path> <issue-body-file> <data-source> [engines] [governing] [out-dir]" >&2
+        echo "usage: entrypoint.sh report <data-path> <issue-body-file> <data-source> [engines] [governing] [out-dir] [previous-reply-file]" >&2
         exit 2
     fi
 
@@ -136,6 +140,7 @@ if [[ "$MODE" == "report" ]]; then
     ENGINES_INPUT="${4:-wham}"
     GOVERNING_INPUT="${5:-newrecruit battlescribe wham}"
     OUT_DIR="${6:-.}"
+    PREVIOUS_REPLY_FILE="${7:-}"
 
     ENGINE_ARGS=(--engines)
     read -r -a ENGINE_LIST <<< "$ENGINES_INPUT"
@@ -143,6 +148,11 @@ if [[ "$MODE" == "report" ]]; then
     GOVERNING_ARGS=(--governing)
     read -r -a GOVERNING_LIST <<< "$GOVERNING_INPUT"
     GOVERNING_ARGS+=("${GOVERNING_LIST[@]}")
+
+    PREVIOUS_REPLY_ARGS=()
+    if [[ -n "$PREVIOUS_REPLY_FILE" && -f "$PREVIOUS_REPLY_FILE" ]]; then
+        PREVIOUS_REPLY_ARGS=(--previous-reply "$PREVIOUS_REPLY_FILE")
+    fi
 
     DATA_PATH_ABS="$(cd "$DATA_PATH" && pwd)"
     REPORT_DATAROOT="$(mktemp -d)"
@@ -156,7 +166,7 @@ if [[ "$MODE" == "report" ]]; then
         --data "$REPORT_DATAROOT" \
         --data-source "$DATA_SOURCE" \
         --out-dir "$OUT_DIR" \
-        "${ENGINE_ARGS[@]}" "${GOVERNING_ARGS[@]}" || rc=$?
+        "${ENGINE_ARGS[@]}" "${GOVERNING_ARGS[@]}" "${PREVIOUS_REPLY_ARGS[@]}" || rc=$?
 
     if [[ "$rc" -ne 0 ]]; then
         echo "::error::muster report harness error (exit $rc) -- see log above" >&2
