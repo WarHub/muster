@@ -105,7 +105,7 @@ public static class ConvertCommand
                 await File.WriteAllTextAsync(output.FullName, yaml, ct);
             return 0;
         }
-        catch (FormatException e)
+        catch (Exception e) when (e is not OperationCanceledException)
         {
             Console.Error.WriteLine(e.Message);
             return 2;

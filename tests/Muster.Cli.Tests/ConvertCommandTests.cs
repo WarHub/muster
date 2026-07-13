@@ -39,4 +39,19 @@ public class ConvertCommandTests
         var exit = await ConvertCommand.Run("https://evil.example/app/list/x", null, "local:.", true, null, TestContext.Current.CancellationToken);
         Assert.Equal(2, exit);
     }
+
+    [Fact]
+    public async Task Output_to_directory_exits_2_without_throwing()
+    {
+        var tempDir = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName()));
+        tempDir.Create();
+        try
+        {
+            var outputAsDir = new FileInfo(tempDir.FullName);
+            var exit = await ConvertCommand.Run(SamplePath, id: null, dataSource: "local:.", pinObserved: true, output: outputAsDir, ct: TestContext.Current.CancellationToken);
+
+            Assert.Equal(2, exit);
+        }
+        finally { tempDir.Delete(recursive: true); }
+    }
 }
