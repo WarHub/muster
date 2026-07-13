@@ -40,6 +40,13 @@ public class ProgramExitCodeTests
         Assert.Equal(0, exit);
     }
 
+    [Fact]
+    public async Task Convert_with_no_args_exits_inconclusive_not_failed()
+    {
+        var exit = await RunCaptured(["convert"]);
+        Assert.Equal(2, exit);
+    }
+
     private static async Task<int> RunCaptured(string[] args)
     {
         var originalOut = Console.Out;

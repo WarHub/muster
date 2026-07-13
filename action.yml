@@ -10,6 +10,18 @@ inputs:
   base-ref:
     description: "Base git ref for blast-radius diff (empty = plain test)"
     default: ""
+  fail-on-broke:
+    description: Fail the check when the governing engine classifies any fixture as broke/verdict-changed (diff mode).
+    default: "true"
+  fail-on-inconclusive:
+    description: Fail the check (exit 1) instead of neutral warning when the run is inconclusive.
+    default: "false"
+  engines:
+    description: Space-separated engine specs (e.g. "wham newrecruit=docker:ghcr.io/warhub/bsspec-adapter-newrecruit:latest").
+    default: "wham"
+  governing:
+    description: Space-separated governing precedence.
+    default: "newrecruit battlescribe wham"
 outputs:
   report-path:
     description: "Path to muster-report.md"
@@ -20,3 +32,7 @@ runs:
     - "${{ inputs.data-path }}"
     - "${{ inputs.fixtures-path }}"
     - "${{ inputs.base-ref }}"
+    - "${{ inputs.fail-on-broke }}"
+    - "${{ inputs.fail-on-inconclusive }}"
+    - "${{ inputs.engines }}"
+    - "${{ inputs.governing }}"

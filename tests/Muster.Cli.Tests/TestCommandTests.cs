@@ -32,14 +32,20 @@ public class TestCommandTests
         Assert.Contains("[PASS] unit-costs-20", stdout, StringComparison.Ordinal);
         Assert.Contains("Results: 1 passed, 0 failed, 0 inconclusive", stdout, StringComparison.Ordinal);
 
-        // --report writes a JSON file with matching counts.
+        // --report writes a JSON file with the MultiRunReport envelope: {governing, unavailable, runs:[…]}.
         Assert.True(File.Exists(reportPath));
         using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(reportPath, TestContext.Current.CancellationToken));
         var root = doc.RootElement;
-        Assert.Equal(1, root.GetProperty("total").GetInt32());
-        Assert.Equal(1, root.GetProperty("passed").GetInt32());
-        Assert.Equal(0, root.GetProperty("failed").GetInt32());
-        Assert.Equal(0, root.GetProperty("inconclusive").GetInt32());
+        Assert.Equal("wham", root.GetProperty("governing").GetString());
+        Assert.Equal(0, root.GetProperty("unavailable").GetArrayLength());
+        var runs = root.GetProperty("runs");
+        Assert.Equal(1, runs.GetArrayLength());
+        var run = runs[0];
+        Assert.Equal("wham", run.GetProperty("engine").GetString());
+        Assert.Equal(1, run.GetProperty("total").GetInt32());
+        Assert.Equal(1, run.GetProperty("passed").GetInt32());
+        Assert.Equal(0, run.GetProperty("failed").GetInt32());
+        Assert.Equal(0, run.GetProperty("inconclusive").GetInt32());
     }
 
     [Fact]

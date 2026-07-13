@@ -2,6 +2,7 @@ using System.CommandLine;
 using System.Diagnostics;
 using BattleScribeSpec;
 using BattleScribeSpec.Roster;
+using Muster.Cli.Engines;
 using Muster.Cli.Fixtures;
 using Muster.Cli.Reporting;
 using WarHub.ArmouryModel.RosterEngine.Spec;
@@ -11,12 +12,11 @@ namespace Muster.Cli.Commands;
 /// <summary>
 /// <c>muster test --data &lt;dir&gt; --fixtures &lt;dir&gt;</c> — evaluates golden-roster
 /// fixtures (battlescribe-spec roster DSL YAML files) against a wargame data repo,
-/// using wham's roster engine.
+/// using one or more roster engines (builtin wham by default, or external adapters via
+/// <c>--engines</c>).
 /// </summary>
 public static class TestCommand
 {
-    private const string EngineName = "wham";
-
     public static Command Create()
     {
         var dataOption = new Option<DirectoryInfo>("--data")
@@ -38,33 +38,53 @@ public static class TestCommand
         {
             Description = "Write JSON run report to path.",
         };
+        var enginesOption = new Option<string[]>("--engines")
+        {
+            Description = "Engines to run: 'wham' (builtin), 'name=dotnet:path.dll', 'name=docker:image', 'name=exe args'. Default: wham.",
+            AllowMultipleArgumentsPerToken = true,
+        };
+        var governingOption = new Option<string[]>("--governing")
+        {
+            Description = "Governing-engine precedence (first match that ran governs). Default: newrecruit battlescribe wham.",
+            AllowMultipleArgumentsPerToken = true,
+        };
 
         var command = new Command("test", "Evaluate golden roster fixtures against the data repo.");
         command.Options.Add(dataOption);
         command.Options.Add(fixturesOption);
         command.Options.Add(outputOption);
         command.Options.Add(reportOption);
+        command.Options.Add(enginesOption);
+        command.Options.Add(governingOption);
         command.SetAction(parse => Run(
             parse.GetValue(dataOption)!,
             parse.GetValue(fixturesOption)!,
             parse.GetValue(outputOption)!,
-            parse.GetValue(reportOption)));
+            parse.GetValue(reportOption),
+            parse.GetValue(enginesOption) ?? [],
+            parse.GetValue(governingOption) ?? []));
 
         return command;
     }
 
-    internal static int Run(DirectoryInfo data, DirectoryInfo fixtures, string output, FileInfo? report)
+    internal static int Run(
+        DirectoryInfo data, DirectoryInfo fixtures, string output, FileInfo? report,
+        IReadOnlyList<string> engines, IReadOnlyList<string> governing)
     {
         try
         {
-            var runReport = RunFixtures(data.FullName, fixtures.FullName);
-            RunReport.Write(runReport, output, Console.Out);
+            var multiReport = MultiRunReport.Run(data.FullName, fixtures.FullName, engines, governing);
+            MultiRunReport.Write(multiReport, output, Console.Out);
             if (report is not null)
             {
-                File.WriteAllText(report.FullName, RunReport.ToJson(runReport));
+                File.WriteAllText(report.FullName, MultiRunReport.ToJson(multiReport));
             }
 
-            return runReport.Failed > 0 ? 1 : runReport.Inconclusive > 0 ? 2 : 0;
+            return multiReport.Runs.Any(r => r.Failed > 0)
+                ? 1
+                : multiReport.Runs.Count == 0 || multiReport.Runs.Any(r => r.Inconclusive > 0)
+                    ? 2
+                    : 0;
         }
         catch (HarnessInconclusiveException ex)
         {
@@ -85,7 +105,18 @@ public static class TestCommand
     /// Thrown for harness-level (not per-fixture) problems: a missing data or fixtures
     /// directory, or a fixtures directory with no <c>*.yaml</c> fixtures in it.
     /// </exception>
-    internal static RunReport RunFixtures(string dataDir, string fixturesDir)
+    internal static RunReport RunFixtures(string dataDir, string fixturesDir) =>
+        RunFixtures(dataDir, fixturesDir, EngineSpec.Parse(EngineSpec.BuiltinName));
+
+    /// <summary>
+    /// Runs every fixture under <paramref name="fixturesDir"/> against <paramref name="dataDir"/>
+    /// using <paramref name="engineSpec"/> and returns the aggregate <see cref="RunReport"/>.
+    /// </summary>
+    /// <exception cref="HarnessInconclusiveException">
+    /// Thrown for harness-level (not per-fixture) problems: a missing data or fixtures
+    /// directory, or a fixtures directory with no <c>*.yaml</c> fixtures in it.
+    /// </exception>
+    internal static RunReport RunFixtures(string dataDir, string fixturesDir, EngineSpec engineSpec)
     {
         if (!Directory.Exists(dataDir))
         {
@@ -107,16 +138,31 @@ public static class TestCommand
         }
 
         var resolver = RepoDataSourceResolver.Create(dataDir);
-        var results = new List<FixtureResult>(fixturePaths.Count);
-        foreach (var path in fixturePaths)
-        {
-            results.Add(RunFixture(path, dataDir, resolver));
-        }
 
-        return RunReport.Create(EngineName, dataDir, results);
+        // Builtin wham: fresh in-proc adapter per fixture (cheap, current behavior).
+        // External engines: one shared engine instance for the whole run — RosterRunner
+        // calls Cleanup() between specs so a single adapter process is reused across fixtures.
+        IRosterEngine? sharedEngine = engineSpec.Kind == EngineKind.Builtin
+            ? null
+            : EngineRegistry.CreateEngine(engineSpec);
+        try
+        {
+            var results = new List<FixtureResult>(fixturePaths.Count);
+            foreach (var path in fixturePaths)
+            {
+                results.Add(RunFixture(path, dataDir, resolver, engineSpec, sharedEngine));
+            }
+
+            return RunReport.Create(engineSpec.Name, dataDir, results);
+        }
+        finally
+        {
+            sharedEngine?.Dispose();
+        }
     }
 
-    private static FixtureResult RunFixture(string path, string dataDir, DataSourceResolver resolver)
+    private static FixtureResult RunFixture(
+        string path, string dataDir, DataSourceResolver resolver, EngineSpec engineSpec, IRosterEngine? sharedEngine)
     {
         var sw = Stopwatch.StartNew();
 
@@ -146,10 +192,10 @@ public static class TestCommand
                 sw.ElapsedMilliseconds, Inconclusive: true);
         }
 
+        IRosterEngine engine = sharedEngine ?? new SpecRosterEngineAdapter();
         try
         {
-            using IRosterEngine engine = new SpecRosterEngineAdapter();
-            var runner = new RosterRunner(engine, resolver, engineName: EngineName);
+            var runner = new RosterRunner(engine, resolver, engineName: engineSpec.Name);
             var result = runner.Run(spec);
             if (result.HarnessError is { } harnessError)
             {
@@ -167,6 +213,13 @@ public static class TestCommand
             return new FixtureResult(
                 spec.Id, path, Passed: false,
                 [$"engine crash: {ex.GetType().Name}: {ex.Message}"], sw.ElapsedMilliseconds, Inconclusive: true);
+        }
+        finally
+        {
+            if (sharedEngine is null)
+            {
+                engine.Dispose();
+            }
         }
     }
 

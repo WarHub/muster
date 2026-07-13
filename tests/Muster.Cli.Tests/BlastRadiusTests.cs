@@ -132,4 +132,113 @@ public class BlastRadiusTests
 
         Assert.Equal(["f2", "f1", "f3"], rows.Select(r => r.FixtureId));
     }
+
+    private static RunReport Report(string engine, params FixtureResult[] fixtures) =>
+        RunReport.Create(engine, "/data", fixtures);
+
+    private static MultiRunReport Multi(string? governing, params RunReport[] runs) =>
+        new(governing, [], runs);
+
+    [Fact]
+    public void ClassifyMulti_pairs_engines_by_name_and_classifies_each_independently()
+    {
+        var baseRuns = Multi("wham",
+            Report("wham", Result("f1", passed: true)),
+            Report("fake", Result("f1", passed: true)));
+        var headRuns = Multi("wham",
+            Report("wham", Result("f1", passed: false, ["broke"])),
+            Report("fake", Result("f1", passed: true)));
+
+        var report = BlastRadius.ClassifyMulti(baseRuns, headRuns);
+
+        Assert.Equal("wham", report.Governing);
+        Assert.Equal(2, report.Diffs.Count);
+        var wham = Assert.Single(report.Diffs, d => d.Engine == "wham");
+        Assert.Equal("broke", Assert.Single(wham.Rows).Classification);
+        var fake = Assert.Single(report.Diffs, d => d.Engine == "fake");
+        Assert.Equal("unchanged", Assert.Single(fake.Rows).Classification);
+    }
+
+    [Fact]
+    public void ClassifyMulti_engine_present_on_only_one_side_is_unavailable_and_excluded()
+    {
+        var baseRuns = Multi("wham",
+            Report("wham", Result("f1", passed: true)),
+            Report("fake", Result("f1", passed: true)));
+        var headRuns = Multi("wham",
+            Report("wham", Result("f1", passed: true)));
+
+        var report = BlastRadius.ClassifyMulti(baseRuns, headRuns);
+
+        Assert.Equal(["fake"], report.Unavailable);
+        Assert.Single(report.Diffs);
+        Assert.Equal("wham", Assert.Single(report.Diffs).Engine);
+    }
+
+    [Fact]
+    public void ClassifyMulti_surfaces_engine_gap_when_head_status_disagrees()
+    {
+        var baseRuns = Multi("wham",
+            Report("wham", Result("f1", passed: true)),
+            Report("fake", Result("f1", passed: true)));
+        var headRuns = Multi("wham",
+            Report("wham", Result("f1", passed: false, ["broke"])),
+            Report("fake", Result("f1", passed: true)));
+
+        var report = BlastRadius.ClassifyMulti(baseRuns, headRuns);
+
+        Assert.Equal(["f1"], report.EngineGaps);
+    }
+
+    [Fact]
+    public void ClassifyMulti_no_engine_gap_when_engines_agree_on_head_status()
+    {
+        var baseRuns = Multi("wham",
+            Report("wham", Result("f1", passed: true)),
+            Report("fake", Result("f1", passed: true)));
+        var headRuns = Multi("wham",
+            Report("wham", Result("f1", passed: false, ["broke"])),
+            Report("fake", Result("f1", passed: false, ["also broke"])));
+
+        var report = BlastRadius.ClassifyMulti(baseRuns, headRuns);
+
+        Assert.Empty(report.EngineGaps);
+    }
+
+    [Fact]
+    public void WriteMulti_markdown_renders_per_engine_sections_and_engine_gap_note()
+    {
+        var baseRuns = Multi("wham",
+            Report("wham", Result("f1", passed: true)),
+            Report("fake", Result("f1", passed: true)));
+        var headRuns = Multi("wham",
+            Report("wham", Result("f1", passed: false, ["broke"])),
+            Report("fake", Result("f1", passed: true)));
+        var report = BlastRadius.ClassifyMulti(baseRuns, headRuns);
+
+        using var sw = new StringWriter();
+        BlastRadius.WriteMulti(report, "markdown", sw);
+        var text = sw.ToString();
+
+        Assert.Contains("### Engine: wham (governing)", text, StringComparison.Ordinal);
+        Assert.Contains("### Engine: fake", text, StringComparison.Ordinal);
+        Assert.Contains("engine-gap", text, StringComparison.Ordinal);
+        Assert.Contains("`f1`", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WriteMulti_json_round_trips_report_shape()
+    {
+        var baseRuns = Multi("wham", Report("wham", Result("f1", passed: true)));
+        var headRuns = Multi("wham", Report("wham", Result("f1", passed: true)));
+        var report = BlastRadius.ClassifyMulti(baseRuns, headRuns);
+
+        using var sw = new StringWriter();
+        BlastRadius.WriteMulti(report, "json", sw);
+        var text = sw.ToString();
+
+        Assert.Contains("\"governing\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"diffs\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"engineGaps\"", text, StringComparison.Ordinal);
+    }
 }
