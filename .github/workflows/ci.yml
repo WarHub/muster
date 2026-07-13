@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/warhub/muster
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # NOTE (publishing-phase ordering): submodule fetch below requires
+      # wham's `feat/yaml-reader` branch and battlescribe-spec's
+      # `feat/muster-support` branch to be pushed upstream first. Until
+      # those land, this checkout step will fail to resolve the pinned
+      # submodule commits on a fresh clone.
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - run: dotnet test
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build image
+        run: docker build -t "$IMAGE_NAME:ci" .
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          SHA_TAG="sha-${GITHUB_SHA:0:7}"
+          docker tag "$IMAGE_NAME:ci" "$IMAGE_NAME:latest"
+          docker tag "$IMAGE_NAME:ci" "$IMAGE_NAME:$SHA_TAG"
+          docker push "$IMAGE_NAME:latest"
+          docker push "$IMAGE_NAME:$SHA_TAG"
