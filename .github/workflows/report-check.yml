@@ -178,7 +178,9 @@ jobs:
           git config user.email "muster@users.noreply.github.com"
           branch="muster/promote-issue-$ISSUE"
           git checkout -b "$branch"
-          git add "${{ inputs.fixtures-out }}"
+          # -f: some data repos gitignore their fixtures dir (tracked files stay tracked,
+          # but the freshly promoted fixture is new and would be refused otherwise)
+          git add -f "${{ inputs.fixtures-out }}"
           git commit -m "test: promote issue #$ISSUE roster to golden fixture"
           git push origin "$branch"
           gh pr create -R "$GITHUB_REPOSITORY" --head "$branch" \
