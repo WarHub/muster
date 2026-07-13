@@ -61,6 +61,33 @@ public class SpecEmitterTests
     }
 
     [Fact]
+    public void Names_with_control_characters_round_trip_through_SpecLoader()
+    {
+        const string tricky = "line1\nline2: evil";
+        var roster = new ReplayRoster(
+            Name: tricky,
+            GameSystemId: "sys-1",
+            ObservedTotals: [],
+            BooksRevisions: [],
+            Forces:
+            [
+                new ReplayForce("force-entry", "cat-1",
+                    Selections:
+                    [
+                        new ReplaySelection("entry-1", 1, tricky + "\t", [], []),
+                    ],
+                    ChildForces: []),
+            ],
+            Unmapped: []);
+
+        var yaml = SpecEmitter.Emit(roster, "x", "local:.", pinObserved: false);
+        var spec = SpecLoader.LoadFromYaml(yaml); // must not throw (hard round-trip guarantee)
+
+        var customStep = Assert.Single(spec.Steps, s => s.Action == "setCustomization");
+        Assert.Equal(tricky + "\t", customStep.CustomName);
+    }
+
+    [Fact]
     public void Selection_steps_reference_parent_outputs()
     {
         var yaml = SpecEmitter.Emit(Sample(), "x", "local:.", pinObserved: false);

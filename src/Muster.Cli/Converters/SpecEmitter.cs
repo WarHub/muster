@@ -115,6 +115,36 @@ public static class SpecEmitter
             EmitSelection(sb, child, forceStep, stepId, ref selIndex);
     }
 
-    private static string Quote(string value) =>
-        "\"" + value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
+    private static string Quote(string value)
+    {
+        var escaped = value
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal);
+
+        var sb = new StringBuilder(escaped.Length + 2);
+        sb.Append('"');
+        foreach (var c in escaped)
+        {
+            switch (c)
+            {
+                case '\n':
+                    sb.Append("\\n");
+                    break;
+                case '\r':
+                    sb.Append("\\r");
+                    break;
+                case '\t':
+                    sb.Append("\\t");
+                    break;
+                default:
+                    if (c < ' ')
+                        sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
+                    else
+                        sb.Append(c);
+                    break;
+            }
+        }
+        sb.Append('"');
+        return sb.ToString();
+    }
 }
