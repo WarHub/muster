@@ -133,6 +133,14 @@ public static class TestCommand
             using IRosterEngine engine = new SpecRosterEngineAdapter();
             var runner = new RosterRunner(engine, resolver, engineName: EngineName);
             var result = runner.Run(spec);
+            if (result.HarnessError is { } harnessError)
+            {
+                // Engine/harness crashed inside the runner (setup or step execution):
+                // classify as inconclusive, not a genuine assertion failure.
+                return new FixtureResult(
+                    spec.Id, path, Passed: false, [harnessError], sw.ElapsedMilliseconds, Inconclusive: true);
+            }
+
             return new FixtureResult(
                 spec.Id, path, result.Passed, [.. result.Failures], sw.ElapsedMilliseconds, Inconclusive: false);
         }
