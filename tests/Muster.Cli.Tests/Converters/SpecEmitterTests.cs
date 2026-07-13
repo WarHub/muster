@@ -45,6 +45,41 @@ public class SpecEmitterTests
     }
 
     [Fact]
+    public void Per_selection_observed_costs_are_commented_not_pinned()
+    {
+        // Decision (Task 7 Step 4): RosterRunner.AssertSelections matches expected vs.
+        // actual selections positionally (expected[si] vs actual[si]), so a per-selection
+        // expectedState pin keyed on the converter's emit order could silently drift onto
+        // the wrong selection if the engine reorders/auto-adds selections. Observed
+        // per-selection costs are therefore surfaced as a comment only, never pinned.
+        var yaml = SpecEmitter.Emit(Sample(), "issue-42", "github:test/repo", pinObserved: true);
+
+        Assert.Contains(
+            "# per-selection costs observed but not pinned (comparer is order-sensitive)",
+            yaml, StringComparison.Ordinal);
+
+        var spec = SpecLoader.LoadFromYaml(yaml); // still must round-trip cleanly
+        Assert.DoesNotContain(spec.Steps, s =>
+            s.ExpectedState?.Forces is { Count: > 0 });
+    }
+
+    [Fact]
+    public void No_comment_when_no_selection_has_observed_costs()
+    {
+        var roster = Sample() with
+        {
+            Forces =
+            [
+                new("bb9d-299a-ed60-2d8a", "a55f-b7b3-6c65-a05f",
+                    Selections: [new("entry-1", 1, null, [], [])],
+                    ChildForces: []),
+            ],
+        };
+        var yaml = SpecEmitter.Emit(roster, "issue-42", "github:test/repo", pinObserved: true);
+        Assert.DoesNotContain("per-selection costs observed", yaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Without_pins_no_expectedState_is_emitted()
     {
         var yaml = SpecEmitter.Emit(Sample(), "issue-42", "github:test/repo", pinObserved: false);

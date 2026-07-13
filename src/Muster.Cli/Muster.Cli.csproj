@@ -13,6 +13,9 @@
     <PackageReference Include="System.CommandLine" />
     <ProjectReference Include="..\..\lib\wham\src\WarHub.ArmouryModel.RosterEngine.Spec\WarHub.ArmouryModel.RosterEngine.Spec.csproj" />
     <ProjectReference Include="..\..\lib\wham\lib\battlescribe-spec\src\BattleScribeSpec.TestKit\BattleScribeSpec.TestKit.csproj" />
+    <!-- WarHub.ArmouryModel.Source.BattleScribe arrives transitively via RosterEngine.Spec.
+         Workspaces.BattleScribe (LoadSourceAuto/.rosz zip handling) does not, so it's explicit. -->
+    <ProjectReference Include="..\..\lib\wham\src\WarHub.ArmouryModel.Workspaces.BattleScribe\WarHub.ArmouryModel.Workspaces.BattleScribe.csproj" />
   </ItemGroup>
 
   <ItemGroup>

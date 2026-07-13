@@ -44,8 +44,33 @@ public static class SpecEmitter
                 sb.AppendLine($"          value: {cost.Value.ToString(CultureInfo.InvariantCulture)}");
             }
         }
+
+        if (pinObserved && HasAnyObservedCosts(roster))
+        {
+            sb.AppendLine();
+            sb.AppendLine("  # per-selection costs observed but not pinned (comparer is order-sensitive)");
+        }
+
         return sb.ToString();
     }
+
+    // Step 4 decision (see RosterRunner.AssertSelections in
+    // BattleScribeSpec.TestKit/Roster/RosterRunner.cs ~line 691-808): expected vs.
+    // actual selections are matched by *position* (expected[si] against actual[si]),
+    // not by name or entryId — costs within a matched pair are then looked up by
+    // TypeId/Name, but getting to that pair at all depends on index alignment. If the
+    // engine auto-adds/reorders selections (e.g. default child selections), a
+    // per-selection cost pin emitted at the observed index would silently compare
+    // against the wrong selection instead of failing loudly. So per-selection
+    // observed costs are surfaced only as a YAML comment, never as expectedState
+    // pins; only the roster-level totals (order-independent) are pinned.
+    private static bool HasAnyObservedCosts(ReplayRoster roster) => roster.Forces.Any(HasAnyObservedCosts);
+
+    private static bool HasAnyObservedCosts(ReplayForce force) =>
+        force.Selections.Any(HasAnyObservedCosts) || force.ChildForces.Any(HasAnyObservedCosts);
+
+    private static bool HasAnyObservedCosts(ReplaySelection sel) =>
+        sel.ObservedCosts.Count > 0 || sel.Children.Any(HasAnyObservedCosts);
 
     private static void EmitForce(StringBuilder sb, ReplayForce force, string? parentForceStep, ref int forceIndex, ref int selIndex)
     {
