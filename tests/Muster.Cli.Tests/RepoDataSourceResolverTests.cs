@@ -1,4 +1,5 @@
 using BattleScribeSpec;
+using BattleScribeSpec.Roster;
 using Muster.Cli.Fixtures;
 using Xunit;
 
@@ -71,5 +72,145 @@ public class RepoDataSourceResolverTests
         Assert.Equal(2, files.Count);
         Assert.Contains(files, f => f.FileName == "System.gst" && f.Content == "<gameSystem />");
         Assert.Contains(files, f => f.FileName == "Catalogue.cat" && f.Content == "<catalogue />");
+    }
+
+    [Fact]
+    public void Create_resolver_drives_RosterRunner_which_calls_engine_SetupFromFiles_with_the_resolved_files()
+    {
+        // Exercises the real chain end-to-end: fixture YAML -> RepoDataSourceResolver ->
+        // RosterRunner -> IRosterEngine.SetupFromFiles — rather than hand-mirroring
+        // RosterRunner's internal file-collection logic (as the test above does).
+        var dataDir = Directory.CreateTempSubdirectory("muster-datarepo").FullName;
+        var cachedRepoDir = Path.Combine(dataDir, "github", "test-org", "test-repo", "main");
+        Directory.CreateDirectory(cachedRepoDir);
+        const string systemGstContent = "<gameSystem id=\"gs-1\" name=\"Test System\" />";
+        File.WriteAllText(Path.Combine(cachedRepoDir, "system.gst"), systemGstContent);
+
+        var spec = SpecLoader.LoadFromYaml("""
+            id: fake-engine-datasource
+            category: runner
+            description: exercises RepoDataSourceResolver -> RosterRunner -> engine.SetupFromFiles
+            setup:
+              dataSource: "github:test-org/test-repo@main"
+            steps:
+              - expectedState: {}
+            """);
+
+        var engine = new FakeEngine();
+        var runner = new RosterRunner(engine, RepoDataSourceResolver.Create(dataDir), engineName: "wham");
+
+        runner.Run(spec);
+
+        Assert.NotNull(engine.ReceivedFiles);
+        Assert.Contains(engine.ReceivedFiles, f => f.FileName == "system.gst" && f.Content == systemGstContent);
+    }
+
+    [Fact]
+    public void IsPopulatedFor_returns_true_for_a_populated_github_cache_hit()
+    {
+        var dataDir = Directory.CreateTempSubdirectory("muster-datarepo").FullName;
+        var cachedRepoDir = Path.Combine(dataDir, "github", "BSData", "wh40k-10e", "v10.6.0");
+        Directory.CreateDirectory(cachedRepoDir);
+        File.WriteAllText(Path.Combine(cachedRepoDir, "Warhammer 40,000.gst"), "<gameSystem />");
+
+        Assert.True(RepoDataSourceResolver.IsPopulatedFor(dataDir, "github:BSData/wh40k-10e@v10.6.0"));
+    }
+
+    [Fact]
+    public void IsPopulatedFor_returns_false_when_the_ref_does_not_match_a_populated_cache_dir()
+    {
+        var dataDir = Directory.CreateTempSubdirectory("muster-datarepo").FullName;
+        var cachedRepoDir = Path.Combine(dataDir, "github", "BSData", "wh40k-10e", "v10.6.0");
+        Directory.CreateDirectory(cachedRepoDir);
+        File.WriteAllText(Path.Combine(cachedRepoDir, "Warhammer 40,000.gst"), "<gameSystem />");
+
+        Assert.False(RepoDataSourceResolver.IsPopulatedFor(dataDir, "github:BSData/wh40k-10e@v10.7.0"));
+    }
+
+    [Fact]
+    public void IsPopulatedFor_returns_true_for_an_existing_local_directory()
+    {
+        var dataDir = Directory.CreateTempSubdirectory("muster-datarepo").FullName;
+        var localDir = Directory.CreateTempSubdirectory("muster-local").FullName;
+
+        Assert.True(RepoDataSourceResolver.IsPopulatedFor(dataDir, $"local:{localDir}"));
+    }
+
+    [Fact]
+    public void IsPopulatedFor_returns_false_for_a_missing_local_directory()
+    {
+        var dataDir = Directory.CreateTempSubdirectory("muster-datarepo").FullName;
+        var missingDir = Path.Combine(Path.GetTempPath(), $"muster-missing-{Guid.NewGuid():N}");
+
+        Assert.False(RepoDataSourceResolver.IsPopulatedFor(dataDir, $"local:{missingDir}"));
+    }
+
+    [Fact]
+    public void IsPopulatedFor_returns_false_for_a_garbage_dataSource_uri_without_throwing()
+    {
+        var dataDir = Directory.CreateTempSubdirectory("muster-datarepo").FullName;
+
+        Assert.False(RepoDataSourceResolver.IsPopulatedFor(dataDir, "not-a-valid-uri"));
+        Assert.False(RepoDataSourceResolver.IsPopulatedFor(dataDir, "ftp:some/unsupported/scheme"));
+        Assert.False(RepoDataSourceResolver.IsPopulatedFor(dataDir, ""));
+    }
+
+    /// <summary>
+    /// Minimal <see cref="IRosterEngine"/> fake, mirroring the pattern used by
+    /// <c>RunnerAndProtocolRegressionTests.FakeEngine</c> in the wham battlescribe-spec
+    /// TestKit's own regression tests. Only <see cref="SetupFromFiles"/> and the state
+    /// getters matter for this test; every other action member either isn't reached
+    /// (no action steps in the fixture) or would throw if it were.
+    /// </summary>
+    private sealed class FakeEngine : IRosterEngine
+    {
+        public List<(string FileName, string Content)>? ReceivedFiles { get; private set; }
+
+        public IReadOnlyList<string> Setup(BattleScribeSpec.Protocol.ProtocolGameSystem gameSystem, BattleScribeSpec.Protocol.ProtocolCatalogue[] catalogues) =>
+            throw new NotSupportedException("Not exercised: this test uses dataSource setup, not inline setup.");
+
+        public ActionOutputs AddForce(string forceEntryId, string catalogueId) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public ActionOutputs AddChildForce(string parentForceId, string forceEntryId, string catalogueId) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public void RemoveForce(string forceId) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public ActionOutputs SelectEntry(string forceId, string entryId) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public ActionOutputs SelectChildEntry(string forceId, string parentSelectionId, string entryId) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public void DeselectSelection(string forceId, string selectionId) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public void SetSelectionCount(string forceId, string selectionId, int count) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public ActionOutputs DuplicateSelection(string forceId, string selectionId) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public ActionOutputs DuplicateForce(string forceId) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public void SetCostLimit(string costTypeId, decimal value) =>
+            throw new NotSupportedException("Not exercised: this test's fixture has no action steps.");
+
+        public RosterState GetRosterState() => new("roster", "gs", [], [], []);
+
+        public IReadOnlyList<ValidationErrorState> GetValidationErrors() => [];
+
+        public IReadOnlyList<string> SetupFromFiles(IReadOnlyList<(string FileName, string Content)> files)
+        {
+            ReceivedFiles = [.. files];
+            return [];
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }
