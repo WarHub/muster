@@ -30,6 +30,29 @@ public sealed record BlastRow(
 public sealed record DiffReport(RunReport Base, RunReport Head, IReadOnlyList<BlastRow> Rows);
 
 /// <summary>
+/// Per-engine blast radius rows for one engine in a <see cref="MultiDiffReport"/>.
+/// </summary>
+/// <param name="Engine">Engine name.</param>
+/// <param name="Rows">This engine's classified fixture rows (base run vs head run).</param>
+public sealed record EngineDiff(string Engine, IReadOnlyList<BlastRow> Rows);
+
+/// <summary>
+/// Combined payload for <c>muster diff</c> across every engine that ran on both base and head.
+/// </summary>
+/// <param name="Governing">Name of the governing engine (see <see cref="MultiRunReport.Governing"/>), or <c>null</c>.</param>
+/// <param name="Unavailable">Names of engines that did not run on both sides (unavailable on either, or only present on one side).</param>
+/// <param name="Diffs">Per-engine classified rows, one <see cref="EngineDiff"/> per engine that ran on both sides.</param>
+/// <param name="EngineGaps">
+/// Fixture ids where engines that ran on both sides disagree on head status — a signal of
+/// engine divergence that the governing engine's verdict does not resolve.
+/// </param>
+public sealed record MultiDiffReport(
+    string? Governing,
+    IReadOnlyList<string> Unavailable,
+    IReadOnlyList<EngineDiff> Diffs,
+    IReadOnlyList<string> EngineGaps);
+
+/// <summary>
 /// Compares two <see cref="RunReport"/>s (same fixtures, different data trees) and classifies
 /// each fixture's change in outcome — the blast radius of the base-to-head diff.
 /// </summary>
@@ -70,6 +93,46 @@ public static class BlastRadius
         return rows;
     }
 
+    /// <summary>
+    /// Pairs engines that ran on both <paramref name="baseRuns"/> and <paramref name="headRuns"/>
+    /// by name and classifies each pair's fixtures via <see cref="Classify"/>. Engines present on
+    /// only one side (unavailable, or ran on only base/head) are reported in
+    /// <see cref="MultiDiffReport.Unavailable"/> and excluded from rows and gating.
+    /// </summary>
+    public static MultiDiffReport ClassifyMulti(MultiRunReport baseRuns, MultiRunReport headRuns)
+    {
+        ArgumentNullException.ThrowIfNull(baseRuns);
+        ArgumentNullException.ThrowIfNull(headRuns);
+
+        var baseByEngine = baseRuns.Runs.ToDictionary(r => r.Engine, StringComparer.Ordinal);
+        var headByEngine = headRuns.Runs.ToDictionary(r => r.Engine, StringComparer.Ordinal);
+
+        var unavailable = new List<string>(baseRuns.Unavailable.Union(headRuns.Unavailable, StringComparer.Ordinal));
+        var diffs = new List<EngineDiff>();
+        foreach (var (engine, baseRun) in baseByEngine)
+        {
+            if (!headByEngine.TryGetValue(engine, out var headRun)) { unavailable.Add(engine); continue; }
+            diffs.Add(new(engine, Classify(baseRun, headRun)));
+        }
+
+        foreach (var engine in headByEngine.Keys.Except(baseByEngine.Keys, StringComparer.Ordinal))
+            unavailable.Add(engine);
+
+        // engine-gap: fixtures whose HEAD status differs across engines that ran both sides
+        var gaps = new List<string>();
+        if (diffs.Count > 1)
+        {
+            var byFixture = diffs
+                .SelectMany(d => d.Rows.Select(r => (r.FixtureId, r.HeadStatus)))
+                .GroupBy(x => x.FixtureId, StringComparer.Ordinal);
+            foreach (var g in byFixture)
+                if (g.Select(x => x.HeadStatus).Distinct(StringComparer.Ordinal).Count() > 1)
+                    gaps.Add(g.Key);
+        }
+
+        return new(headRuns.Governing, unavailable, diffs, gaps);
+    }
+
     private static BlastRow ClassifyPair(FixtureResult baseFixture, FixtureResult headFixture)
     {
         var baseStatus = Status(baseFixture);
@@ -104,6 +167,8 @@ public static class BlastRadius
     public static string ToJson(RunReport baseRun, RunReport headRun, IReadOnlyList<BlastRow> rows) =>
         JsonSerializer.Serialize(new DiffReport(baseRun, headRun, rows), JsonOptions);
 
+    public static string ToJson(MultiDiffReport report) => JsonSerializer.Serialize(report, JsonOptions);
+
     public static void Write(RunReport baseRun, RunReport headRun, IReadOnlyList<BlastRow> rows, string mode, TextWriter writer)
     {
         switch (mode)
@@ -114,6 +179,43 @@ public static class BlastRadius
             default: // markdown
                 WriteMarkdown(baseRun, headRun, rows, writer);
                 break;
+        }
+    }
+
+    /// <summary>
+    /// Writes a <see cref="MultiDiffReport"/>: <c>json</c> serializes the whole record; markdown
+    /// renders one <c>### Engine: {name}</c> section per engine (reusing the single-engine
+    /// markdown row/detail rendering), followed by unavailable-engine notices and, when
+    /// <see cref="MultiDiffReport.EngineGaps"/> is non-empty, an <c>engine-gap</c> section.
+    /// </summary>
+    public static void WriteMulti(MultiDiffReport report, string mode, TextWriter writer)
+    {
+        if (mode == "json")
+        {
+            writer.WriteLine(ToJson(report));
+            return;
+        }
+
+        foreach (var diff in report.Diffs)
+        {
+            writer.WriteLine($"### Engine: {diff.Engine}{(diff.Engine == report.Governing ? " (governing)" : "")}");
+            writer.WriteLine();
+            WriteMarkdownBody(diff.Rows, writer);
+            writer.WriteLine();
+        }
+
+        foreach (var name in report.Unavailable)
+        {
+            writer.WriteLine($"> ⚠ engine `{name}` was requested but is unavailable, or only ran on one side.");
+        }
+
+        if (report.EngineGaps.Count > 0)
+        {
+            writer.WriteLine();
+            writer.WriteLine("### ⚠ engine-gap");
+            writer.WriteLine(
+                $"Engines disagree on the head state of: {string.Join(", ", report.EngineGaps.Select(g => $"`{g}`"))}. "
+                + "The governing engine's verdict stands; divergence should be triaged as an engine defect.");
         }
     }
 
@@ -128,6 +230,11 @@ public static class BlastRadius
             CultureInfo.InvariantCulture,
             $"Head: `{headRun.DataDir}` — {headRun.Passed} passed, {headRun.Failed} failed, {headRun.Inconclusive} inconclusive"));
         writer.WriteLine();
+        WriteMarkdownBody(rows, writer);
+    }
+
+    private static void WriteMarkdownBody(IReadOnlyList<BlastRow> rows, TextWriter writer)
+    {
         writer.WriteLine("| Fixture | Base | Head | Change |");
         writer.WriteLine("| --- | --- | --- | --- |");
         foreach (var row in rows)

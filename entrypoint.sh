@@ -3,12 +3,20 @@ set -euo pipefail
 
 # muster GitHub Action entrypoint.
 #
-# Usage: entrypoint.sh <data-path> <fixtures-path> [base-ref]
+# Usage: entrypoint.sh <data-path> <fixtures-path> [base-ref] [fail-on-broke] [fail-on-inconclusive] [engines] [governing]
 #
-#   data-path      Data repo root (checkout-relative or absolute).
-#   fixtures-path  Golden fixtures directory (checkout-relative or absolute).
-#   base-ref       Git ref to diff against. Empty (or omitted) -> `muster test`.
-#                   Non-empty -> `muster diff --base <base-ref> --head <workspace>`.
+#   data-path             Data repo root (checkout-relative or absolute).
+#   fixtures-path         Golden fixtures directory (checkout-relative or absolute).
+#   base-ref              Git ref to diff against. Empty (or omitted) -> `muster test`.
+#                          Non-empty -> `muster diff --base <base-ref> --head <workspace>`.
+#   fail-on-broke         "true"/"false" (default: true). Passes `--fail-on-broke` to
+#                          `muster diff` when true; ignored in `muster test` mode.
+#   fail-on-inconclusive  "true"/"false" (default: false). When true, an inconclusive
+#                          (exit 2) muster run fails the check instead of warning neutrally.
+#   engines                Space-separated engine specs, forwarded as `--engines ...` to
+#                          both `muster test` and `muster diff` (default: "wham").
+#   governing              Space-separated governing precedence, forwarded as
+#                          `--governing ...` (default: "newrecruit battlescribe wham").
 #
 # MUSTER_CMD (default: "dotnet /app/muster.dll") is the muster invocation,
 # split on whitespace. This lets the same script run inside the prebuilt
@@ -39,6 +47,17 @@ read -ra MUSTER_CMD_ARR <<< "$MUSTER_CMD"
 DATA_PATH="$1"
 FIXTURES_PATH="$2"
 BASE_REF="${3:-}"
+FAIL_ON_BROKE="${4:-true}"
+FAIL_ON_INCONCLUSIVE="${5:-false}"
+ENGINES_INPUT="${6:-wham}"
+GOVERNING_INPUT="${7:-newrecruit battlescribe wham}"
+
+ENGINE_ARGS=(--engines)
+read -r -a ENGINE_LIST <<< "$ENGINES_INPUT"
+ENGINE_ARGS+=("${ENGINE_LIST[@]}")
+GOVERNING_ARGS=(--governing)
+read -r -a GOVERNING_LIST <<< "$GOVERNING_INPUT"
+GOVERNING_ARGS+=("${GOVERNING_LIST[@]}")
 
 REPORT_MD="muster-report.md"
 REPORT_JSON="muster-report.json"
@@ -116,7 +135,8 @@ if [[ -z "$BASE_REF" ]]; then
         --data "$HEAD_DATAROOT" \
         --fixtures "$FIXTURES_PATH_ABS" \
         --output github-actions \
-        --report "$REPORT_JSON" > "$REPORT_MD"; then
+        --report "$REPORT_JSON" \
+        "${ENGINE_ARGS[@]}" "${GOVERNING_ARGS[@]}" > "$REPORT_MD"; then
         rc=0
     else
         rc=$?
@@ -138,11 +158,17 @@ else
     BASE_DATAROOT="$(mktemp -d)"
     build_dataroot "$BASE_DATAROOT" "$WORKTREE_DIR/$REL_DATA_PATH"
 
-    if "${MUSTER_CMD_ARR[@]}" diff \
+    DIFF_ARGS=(diff \
         --base "$BASE_DATAROOT" \
         --head "$HEAD_DATAROOT" \
         --fixtures "$FIXTURES_PATH_ABS" \
-        --output markdown > "$REPORT_MD"; then
+        --output markdown \
+        "${ENGINE_ARGS[@]}" "${GOVERNING_ARGS[@]}")
+    if [[ "$FAIL_ON_BROKE" == "true" ]]; then
+        DIFF_ARGS+=(--fail-on-broke)
+    fi
+
+    if "${MUSTER_CMD_ARR[@]}" "${DIFF_ARGS[@]}" > "$REPORT_MD"; then
         rc=0
     else
         rc=$?
@@ -156,6 +182,10 @@ if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
 fi
 
 if [[ "$rc" -eq 2 ]]; then
+    if [[ "$FAIL_ON_INCONCLUSIVE" == "true" ]]; then
+        echo "::error::muster run was inconclusive (exit 2) and fail-on-inconclusive is set"
+        exit 1
+    fi
     echo "::warning::muster run was inconclusive (exit 2) -- treating as neutral"
     exit 0
 fi

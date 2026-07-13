@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Muster.Cli.Commands;
 using Xunit;
 
 namespace Muster.Cli.Tests;
@@ -6,6 +7,51 @@ namespace Muster.Cli.Tests;
 [Collection("Console output tests")]
 public class DiffCommandTests
 {
+    private static string TestAdapterDll => TestPaths.TestAdapterDll;
+
+    private static int RunDiff(
+        string baseDir, string headDir, string fixturesDir, string output,
+        bool failOnBroke = false, string[]? engines = null, string[]? governing = null)
+    {
+        var originalOut = Console.Out;
+        var stdout = new StringWriter();
+        int exit;
+        try
+        {
+            Console.SetOut(stdout);
+            exit = DiffCommand.Run(
+                new DirectoryInfo(baseDir), new DirectoryInfo(headDir), new DirectoryInfo(fixturesDir),
+                output, failOnBroke, engines ?? [], governing ?? []);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        return exit;
+    }
+
+    private static string CaptureDiffOutput(
+        string baseDir, string headDir, string fixturesDir, string output,
+        bool failOnBroke = false, string[]? engines = null, string[]? governing = null)
+    {
+        var originalOut = Console.Out;
+        var stdout = new StringWriter();
+        try
+        {
+            Console.SetOut(stdout);
+            DiffCommand.Run(
+                new DirectoryInfo(baseDir), new DirectoryInfo(headDir), new DirectoryInfo(fixturesDir),
+                output, failOnBroke, engines ?? [], governing ?? []);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+
+        return stdout.ToString();
+    }
+
     [Fact]
     public async Task Diff_reports_broken_fixture_between_trees()
     {
@@ -80,16 +126,55 @@ public class DiffCommandTests
         using var doc = JsonDocument.Parse(stdout.ToString());
         var root = doc.RootElement;
 
-        Assert.True(root.TryGetProperty("base", out var baseReport));
-        Assert.True(root.TryGetProperty("head", out var headReport));
-        Assert.Equal(1, baseReport.GetProperty("passed").GetInt32());
-        Assert.Equal(1, headReport.GetProperty("failed").GetInt32());
+        var diffs = root.GetProperty("diffs");
+        Assert.Equal(1, diffs.GetArrayLength());
+        var wham = diffs[0];
+        Assert.Equal("wham", wham.GetProperty("engine").GetString());
 
-        var rows = root.GetProperty("rows");
+        var rows = wham.GetProperty("rows");
         Assert.Equal(1, rows.GetArrayLength());
         var row = rows[0];
         Assert.Equal("unit-costs-20", row.GetProperty("fixtureId").GetString());
         Assert.Equal("broke", row.GetProperty("classification").GetString());
+    }
+
+    [Fact]
+    public void FailOnBroke_exits_1_when_governing_engine_broke()
+    {
+        var (dataDir, fixturesDir) = TestRepoFactory.CreateTestRepo();
+        var headData = TestRepoFactory.CopyWithReplacement(dataDir, "20", "25"); // breaks the pts=20 pin
+
+        var exit = RunDiff(dataDir, headData, fixturesDir, "markdown",
+            failOnBroke: true, engines: ["wham"], governing: ["wham"]);
+
+        Assert.Equal(1, exit);
+    }
+
+    [Fact]
+    public void FailOnBroke_ignores_non_governing_break()
+    {
+        var (dataDir, fixturesDir) = TestRepoFactory.CreateTestRepo();
+        var headData = TestRepoFactory.CopyWithReplacement(dataDir, "20", "25");
+        // fake adapter always computes pts=20 → fixture passes both sides for 'fake';
+        // wham (non-governing) breaks; check must stay green but report the gap.
+        var exit = RunDiff(dataDir, headData, fixturesDir, "markdown",
+            failOnBroke: true,
+            engines: [$"fake=dotnet:{TestAdapterDll}", "wham"],
+            governing: ["fake", "wham"]);
+
+        Assert.Equal(0, exit);
+    }
+
+    [Fact]
+    public void Head_status_disagreement_reports_engine_gap()
+    {
+        var (dataDir, fixturesDir) = TestRepoFactory.CreateTestRepo();
+        var headData = TestRepoFactory.CopyWithReplacement(dataDir, "20", "25");
+
+        var output = CaptureDiffOutput(dataDir, headData, fixturesDir, "markdown",
+            engines: [$"fake=dotnet:{TestAdapterDll}", "wham"], governing: ["fake"]);
+
+        Assert.Contains("engine-gap", output, StringComparison.Ordinal);
     }
 
     [Fact]

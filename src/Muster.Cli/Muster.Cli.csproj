@@ -15,4 +15,8 @@
     <ProjectReference Include="..\..\lib\wham\lib\battlescribe-spec\src\BattleScribeSpec.TestKit\BattleScribeSpec.TestKit.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Muster.Cli.Tests" />
+  </ItemGroup>
+
 </Project>

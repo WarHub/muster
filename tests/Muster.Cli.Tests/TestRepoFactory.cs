@@ -62,7 +62,12 @@ internal static class TestRepoFactory
                 entryId: se-unit
               - expectedState:
                   costs:
-                    - typeId: ct-pts
+                    # Matched by cost *name* (not typeId): wham's roster-level cost name comes
+                    # from the game system costType's `name` attribute ("pts"), while its typeId
+                    # ("ct-pts") is data-repo-specific and not something a data-agnostic engine
+                    # (e.g. the fake test adapter) can be expected to echo back. Matching by name
+                    # lets this fixture evaluate identically across engines.
+                    - name: pts
                       value: 20
             """);
 

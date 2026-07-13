@@ -6,25 +6,7 @@ namespace Muster.Cli.Tests;
 
 public class MultiEngineTestCommandTests
 {
-    private static string TestAdapterDll
-    {
-        get
-        {
-            var dir = new DirectoryInfo(AppContext.BaseDirectory);
-            while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "Muster.slnx")))
-            {
-                dir = dir.Parent;
-            }
-
-            if (dir is null)
-            {
-                throw new InvalidOperationException(
-                    $"could not locate Muster.slnx above {AppContext.BaseDirectory}");
-            }
-
-            return Path.Combine(dir.FullName, "artifacts", "bin", "Muster.TestAdapter", "debug", "Muster.TestAdapter.dll");
-        }
-    }
+    private static string TestAdapterDll => TestPaths.TestAdapterDll;
 
     [Fact]
     public void Two_engines_produce_two_runs_and_governing_resolves_by_precedence()
