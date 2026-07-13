@@ -21,4 +21,8 @@
     <ProjectReference Include="..\Muster.TestAdapter\Muster.TestAdapter.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="TestData/**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
