@@ -1,0 +1,1030 @@
+{
+ "_id": "6a54b93964df8beb241c49db",
+ "name": "war horde",
+ "id_book": 3898668199,
+ "id_system": 827374861,
+ "list_key": "6a54b93964df8beb241c49dc",
+ "nrversion": 2,
+ "version": 14,
+ "totalCost": 950,
+ "bsid_book": "a55f-b7b3-6c65-a05f",
+ "bsid_system": "sys-352e-adc2-7639-d610",
+ "client_key": "6a1972274c64093cbaeafdab",
+ "army": {
+  "name": "war horde",
+  "option_id": "(roster)",
+  "options": [
+   {
+    "name": "Xenos - Orks",
+    "option_id": "a55f-b7b3-6c65-a05f",
+    "options": [
+     {
+      "name": "Army Roster",
+      "option_id": "bb9d-299a-ed60-2d8a",
+      "options": [
+       {
+        "name": "Configuration",
+        "option_id": "4ac9-fd30-1e3d-b249",
+        "options": [
+         {
+          "name": "Battle Size",
+          "option_id": "564e-fbc6-5266-3ea4",
+          "options": [
+           {
+            "name": "Battle Size",
+            "option_id": "b960-4789-a3a6-59cb",
+            "options": [
+             {
+              "name": "Incursion (1000 Point limit)",
+              "option_id": "d62d-db22-4893-4bc0",
+              "options": [],
+              "uid": "fnhkg1n",
+              "amount": 1
+             }
+            ],
+            "uid": "fnnjb89"
+           }
+          ],
+          "link_id": "7380-3e40-6ed6-b7cc",
+          "uid": "9a7vk5a",
+          "amount": 1
+         },
+         {
+          "name": "Detachment",
+          "option_id": "73c2-d0ed-3c7e-7e17",
+          "options": [
+           {
+            "name": "Detachment",
+            "option_id": "8b85-ad3b-752f-6502",
+            "options": [
+             {
+              "name": "War Horde",
+              "option_id": "496c-ddb9-3e71-e0b3",
+              "options": [],
+              "uid": "fox0gpb",
+              "amount": 1
+             }
+            ],
+            "link_id": "4137-fb48-edc1-4ce3",
+            "uid": "fnp3lu"
+           }
+          ],
+          "link_id": "dc5b-07db-415b-a1da",
+          "uid": "936l4k",
+          "amount": 1
+         },
+         {
+          "name": "Force Disposition",
+          "option_id": "2f69-9148-45b4-86a8",
+          "options": [
+           {
+            "name": "Force Disposition",
+            "option_id": "eece-6d68-6710-7a7f",
+            "options": [
+             {
+              "name": "Take and Hold",
+              "option_id": "a271-bfab-1b97-c55d",
+              "options": [],
+              "uid": "fqoxyck",
+              "amount": 1
+             }
+            ],
+            "link_id": "9c70-af87-0c32-afcf",
+            "uid": "fqmaovl"
+           }
+          ],
+          "link_id": "8bc8-6bfe-78bd-2480",
+          "uid": "8zjwiq",
+          "amount": 1
+         },
+         {
+          "name": "Show/Hide Options",
+          "option_id": "e8ef-836a-a9d1-901d",
+          "options": [
+           {
+            "name": "Crucible Characters are visible",
+            "option_id": "57cc-822a-1d43-be52",
+            "options": [],
+            "link_id": "f578-4362-f482-9f54",
+            "uid": "9g0hdds",
+            "amount": 1
+           },
+           {
+            "name": "Legends are visible",
+            "option_id": "9ed-cbf4-bfe5-90bf",
+            "options": [],
+            "link_id": "892f-57ca-d650-7199",
+            "uid": "9fiutqc",
+            "amount": 1
+           },
+           {
+            "name": "Unaligned Forces are visible",
+            "option_id": "2973-ea51-7f8d-5403",
+            "options": [],
+            "link_id": "985-e753-2e94-859",
+            "uid": "9fin0g",
+            "amount": 1
+           },
+           {
+            "name": "Unaligned Fortifications are visible",
+            "option_id": "e916-2cf4-a49d-b8c4",
+            "options": [],
+            "link_id": "4d37-22c-a45c-64f8",
+            "uid": "9feb0im",
+            "amount": 1
+           }
+          ],
+          "link_id": "a491-128a-9dec-6933",
+          "uid": "9e04wfs",
+          "amount": 1
+         }
+        ],
+        "link_id": "d5de-ee57-ad4b-e4b7",
+        "uid": "6gfhag"
+       },
+       {
+        "name": "Character",
+        "option_id": "9cfd-1c32-585f-7d5c",
+        "options": [
+         {
+          "name": "Beastboss",
+          "option_id": "5a5d-c5a4-39b8-4a3f",
+          "options": [
+           {
+            "name": "Wargear",
+            "option_id": "c2a6-b43b-7306-d984",
+            "options": [
+             {
+              "name": "Beast Snagga klaw",
+              "option_id": "8e20-4ae8-9125-42a6",
+              "options": [],
+              "uid": "xrajhgp",
+              "amount": 1
+             },
+             {
+              "name": "Beastchoppa",
+              "option_id": "6084-9fb5-76d2-8487",
+              "options": [],
+              "link_id": "4ecb-344f-f74f-2c0f",
+              "uid": "xrfrvi",
+              "amount": 1
+             },
+             {
+              "name": "Shoota",
+              "option_id": "64da-fae7-507d-8b18",
+              "options": [],
+              "uid": "xrqww34",
+              "amount": 1
+             }
+            ],
+            "uid": "xrdo7ar"
+           }
+          ],
+          "link_id": "2f80-26a6-9486-b348",
+          "uid": "xle1dcl",
+          "amount": 1
+         },
+         {
+          "name": "Painboy",
+          "option_id": "7669-1442-2c0b-e0c9",
+          "options": [
+           {
+            "name": "Wargear",
+            "option_id": "3ce2-52ad-7bf5-1235",
+            "options": [
+             {
+              "name": "\u2019Urty syringe",
+              "option_id": "14e-7f95-331e-8d6c",
+              "options": [],
+              "link_id": "73f5-86ce-612d-5a0f",
+              "uid": "5s89ebg",
+              "amount": 1
+             },
+             {
+              "name": "Power klaw",
+              "option_id": "ee65-6385-44ba-3758",
+              "options": [],
+              "link_id": "bc10-845c-3ec2-1091",
+              "uid": "5s16r2",
+              "amount": 1
+             }
+            ],
+            "uid": "5rh8u38"
+           }
+          ],
+          "link_id": "5177-1de8-ebd5-e09d",
+          "uid": "5m68uel",
+          "amount": 1
+         },
+         {
+          "name": "Warboss",
+          "option_id": "2efc-c4b3-2ecc-5a37",
+          "options": [
+           {
+            "name": "Wargear",
+            "option_id": "eec2-6ed3-27cd-f0cd",
+            "options": [
+             {
+              "name": "Kombi-weapon",
+              "option_id": "ac6f-9310-e9ac-678",
+              "options": [],
+              "link_id": "183b-3f43-10fc-ca2d",
+              "uid": "tl9crgn",
+              "amount": 1
+             },
+             {
+              "name": "Twin slugga",
+              "option_id": "f8a0-f279-3ee8-2eda",
+              "options": [],
+              "uid": "tkxy87e",
+              "amount": 1
+             },
+             {
+              "name": "Big Choppa",
+              "option_id": "5eb8-cd57-5dee-4eec",
+              "options": [
+               {
+                "name": "Big choppa",
+                "option_id": "614f-3d6b-88aa-9e15",
+                "options": [],
+                "link_id": "446d-ce2c-1afc-c5fb",
+                "uid": "tlw2dsx",
+                "amount": 1
+               }
+              ],
+              "uid": "tlifz8"
+             }
+            ],
+            "uid": "tk2rcyr"
+           }
+          ],
+          "link_id": "9189-6889-492c-a43e",
+          "uid": "tidc2oj",
+          "amount": 1
+         }
+        ],
+        "link_id": "c932-1176-dc9-b390",
+        "uid": "p34o4sm"
+       },
+       {
+        "name": "Battleline",
+        "option_id": "e338-111e-d0c6-b687",
+        "options": [
+         {
+          "name": "Beast Snagga Boyz",
+          "option_id": "b7c3-d00e-daf2-76fb",
+          "options": [
+           {
+            "name": "Beast Snagga Nob",
+            "option_id": "cb1a-f005-c69e-728c",
+            "options": [
+             {
+              "name": "Beast Snagga Nob",
+              "option_id": "8495-e7e7-6d41-2f57",
+              "options": [
+               {
+                "name": "Power snappa",
+                "option_id": "d76a-13f1-cdb0-c3bc",
+                "options": [],
+                "uid": "ug9da2p",
+                "amount": 1
+               },
+               {
+                "name": "Slugga",
+                "option_id": "752e-cd9b-4721-f0b0",
+                "options": [],
+                "link_id": "4baa-e929-86b-c558",
+                "uid": "uhhnbti",
+                "amount": 1
+               }
+              ],
+              "uid": "uehsoi6",
+              "amount": 1
+             }
+            ],
+            "uid": "ue4s8z"
+           },
+           {
+            "name": "9-19 Beast Snagga Boyz",
+            "option_id": "3dc8-103b-baac-3620",
+            "options": [
+             {
+              "name": "Beast Snagga Boy",
+              "option_id": "8462-1df3-6409-5087",
+              "options": [
+               {
+                "name": "Choppa",
+                "option_id": "4e6a-844c-26bf-2b5d",
+                "options": [],
+                "link_id": "d068-604a-e364-a570",
+                "uid": "uitia4",
+                "amount": 1
+               },
+               {
+                "name": "Slugga",
+                "option_id": "e71d-1472-87d-b4fa",
+                "options": [],
+                "link_id": "8143-737a-961-273d",
+                "uid": "ui36q0eh",
+                "amount": 1
+               }
+              ],
+              "uid": "ueta39q",
+              "amount": 9
+             }
+            ],
+            "uid": "ue0f48"
+           }
+          ],
+          "link_id": "fd9d-87f3-1895-3470",
+          "uid": "ucmaul",
+          "amount": 1
+         },
+         {
+          "name": "Boyz",
+          "option_id": "e3b1-1240-2476-cd86",
+          "options": [
+           {
+            "name": "Boss Nob",
+            "option_id": "0fe0-6121-efa6-8057",
+            "options": [
+             {
+              "name": "Boss Nob",
+              "option_id": "4660-3a1-f9f9-1a2b",
+              "options": [
+               {
+                "name": "Big Choppa and Slugga",
+                "option_id": "592c-f0be-c73a-5a3d",
+                "options": [
+                 {
+                  "name": "Big choppa and slugga",
+                  "option_id": "9d77-2604-83bf-8c51",
+                  "options": [
+                   {
+                    "name": "Big choppa",
+                    "option_id": "29e9-cd9b-66bd-fe60",
+                    "options": [],
+                    "link_id": "31a6-5d49-a9e0-e638",
+                    "uid": "bircele",
+                    "amount": 1
+                   },
+                   {
+                    "name": "Slugga",
+                    "option_id": "752e-cd9b-4721-f0b0",
+                    "options": [],
+                    "link_id": "d2a1-2ce7-d467-a117",
+                    "uid": "bi05vot",
+                    "amount": 1
+                   }
+                  ],
+                  "uid": "bhrrlw",
+                  "amount": 1
+                 }
+                ],
+                "uid": "bh97wd"
+               }
+              ],
+              "uid": "bfc9m9o",
+              "amount": 1
+             }
+            ],
+            "uid": "bfcaoi"
+           },
+           {
+            "name": "9-19 Boyz",
+            "option_id": "3d4f-216d-1b28-ee93",
+            "options": [
+             {
+              "name": "Boy w/ Slugga and choppa",
+              "option_id": "7629-a9f5-e881-6ff9",
+              "options": [
+               {
+                "name": "Choppa",
+                "option_id": "e542-78f9-46d8-6c33",
+                "options": [],
+                "link_id": "6e34-5e0b-f267-40f5",
+                "uid": "bkkehya",
+                "amount": 1
+               },
+               {
+                "name": "Slugga",
+                "option_id": "e71d-1472-87d-b4fa",
+                "options": [],
+                "link_id": "f678-5f8a-c349-16d2",
+                "uid": "bkdnvai",
+                "amount": 1
+               }
+              ],
+              "uid": "begc49j",
+              "amount": 17
+             },
+             {
+              "name": "Special Weapons",
+              "option_id": "80bc-1cce-f5af-1a8c",
+              "options": [
+               {
+                "name": "Boy w/ Big shoota and close combat weapon",
+                "option_id": "6fc2-677d-fc5e-9329",
+                "options": [
+                 {
+                  "name": "Big shoota",
+                  "option_id": "1fa0-d99a-154f-ffd8",
+                  "options": [],
+                  "link_id": "f7e0-a138-dd37-e42f",
+                  "uid": "cabrxz36",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Close combat weapon",
+                  "option_id": "0534-7359-3392-9d1b",
+                  "options": [],
+                  "link_id": "2dd8-5af8-ea1a-09e4",
+                  "uid": "cbrpl1b",
+                  "amount": 1
+                 }
+                ],
+                "uid": "be273j",
+                "amount": 1
+               },
+               {
+                "name": "Boy w/ Rokkit launcha and close combat weapon",
+                "option_id": "ca6b-d75f-c372-64ab",
+                "options": [
+                 {
+                  "name": "Close combat weapon",
+                  "option_id": "0534-7359-3392-9d1b",
+                  "options": [],
+                  "link_id": "8b22-e55e-1345-e99b",
+                  "uid": "cchwnsu",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Rokkit launcha",
+                  "option_id": "80bc-5c89-4125-2253",
+                  "options": [],
+                  "link_id": "6db5-ec11-70f7-7c0e",
+                  "uid": "ccowler",
+                  "amount": 1
+                 }
+                ],
+                "uid": "bevkrbd",
+                "amount": 1
+               }
+              ],
+              "uid": "beor1j6"
+             }
+            ],
+            "uid": "bd4flg"
+           }
+          ],
+          "link_id": "187-93d6-1ac7-dbde",
+          "uid": "bclrr0l",
+          "amount": 1
+         },
+         {
+          "name": "Boyz",
+          "option_id": "e3b1-1240-2476-cd86",
+          "options": [
+           {
+            "name": "Boss Nob",
+            "option_id": "0fe0-6121-efa6-8057",
+            "options": [
+             {
+              "name": "Boss Nob",
+              "option_id": "4660-3a1-f9f9-1a2b",
+              "options": [
+               {
+                "name": "Big Choppa and Slugga",
+                "option_id": "592c-f0be-c73a-5a3d",
+                "options": [
+                 {
+                  "name": "Big choppa and slugga",
+                  "option_id": "9d77-2604-83bf-8c51",
+                  "options": [
+                   {
+                    "name": "Big choppa",
+                    "option_id": "29e9-cd9b-66bd-fe60",
+                    "options": [],
+                    "link_id": "31a6-5d49-a9e0-e638",
+                    "uid": "km40td",
+                    "amount": 1
+                   },
+                   {
+                    "name": "Slugga",
+                    "option_id": "752e-cd9b-4721-f0b0",
+                    "options": [],
+                    "link_id": "d2a1-2ce7-d467-a117",
+                    "uid": "kmqvj29",
+                    "amount": 1
+                   }
+                  ],
+                  "uid": "klu1cbh",
+                  "amount": 1
+                 }
+                ],
+                "uid": "kld3xvn"
+               }
+              ],
+              "uid": "kjnjcq9",
+              "amount": 1
+             }
+            ],
+            "uid": "kj3u07c"
+           },
+           {
+            "name": "9-19 Boyz",
+            "option_id": "3d4f-216d-1b28-ee93",
+            "options": [
+             {
+              "name": "Boy w/ Slugga and choppa",
+              "option_id": "7629-a9f5-e881-6ff9",
+              "options": [
+               {
+                "name": "Choppa",
+                "option_id": "e542-78f9-46d8-6c33",
+                "options": [],
+                "link_id": "6e34-5e0b-f267-40f5",
+                "uid": "kojcm5w",
+                "amount": 1
+               },
+               {
+                "name": "Slugga",
+                "option_id": "e71d-1472-87d-b4fa",
+                "options": [],
+                "link_id": "f678-5f8a-c349-16d2",
+                "uid": "kocy7dl",
+                "amount": 1
+               }
+              ],
+              "uid": "kiujmkk",
+              "amount": 8
+             },
+             {
+              "name": "Special Weapons",
+              "option_id": "80bc-1cce-f5af-1a8c",
+              "options": [
+               {
+                "name": "Boy w/ Rokkit launcha and close combat weapon",
+                "option_id": "ca6b-d75f-c372-64ab",
+                "options": [
+                 {
+                  "name": "Close combat weapon",
+                  "option_id": "0534-7359-3392-9d1b",
+                  "options": [],
+                  "link_id": "8b22-e55e-1345-e99b",
+                  "uid": "wewqt98",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Rokkit launcha",
+                  "option_id": "80bc-5c89-4125-2253",
+                  "options": [],
+                  "link_id": "6db5-ec11-70f7-7c0e",
+                  "uid": "wedlay8",
+                  "amount": 1
+                 }
+                ],
+                "uid": "kjwvkfg",
+                "amount": 1
+               }
+              ],
+              "uid": "kjvt5hd"
+             }
+            ],
+            "uid": "kip9q3"
+           }
+          ],
+          "link_id": "187-93d6-1ac7-dbde",
+          "uid": "kh0gzl",
+          "amount": 1
+         },
+         {
+          "name": "Boyz",
+          "option_id": "e3b1-1240-2476-cd86",
+          "options": [
+           {
+            "name": "Boss Nob",
+            "option_id": "0fe0-6121-efa6-8057",
+            "options": [
+             {
+              "name": "Boss Nob",
+              "option_id": "4660-3a1-f9f9-1a2b",
+              "options": [
+               {
+                "name": "Big Choppa and Slugga",
+                "option_id": "592c-f0be-c73a-5a3d",
+                "options": [
+                 {
+                  "name": "Big choppa and slugga",
+                  "option_id": "9d77-2604-83bf-8c51",
+                  "options": [
+                   {
+                    "name": "Big choppa",
+                    "option_id": "29e9-cd9b-66bd-fe60",
+                    "options": [],
+                    "link_id": "31a6-5d49-a9e0-e638",
+                    "uid": "sx8enuo",
+                    "amount": 1
+                   },
+                   {
+                    "name": "Slugga",
+                    "option_id": "752e-cd9b-4721-f0b0",
+                    "options": [],
+                    "link_id": "d2a1-2ce7-d467-a117",
+                    "uid": "sxcqzvn",
+                    "amount": 1
+                   }
+                  ],
+                  "uid": "swxibm",
+                  "amount": 1
+                 }
+                ],
+                "uid": "swcxemt"
+               }
+              ],
+              "uid": "sv4anuw",
+              "amount": 1
+             }
+            ],
+            "uid": "svly7gl"
+           },
+           {
+            "name": "9-19 Boyz",
+            "option_id": "3d4f-216d-1b28-ee93",
+            "options": [
+             {
+              "name": "Boy w/ Slugga and choppa",
+              "option_id": "7629-a9f5-e881-6ff9",
+              "options": [
+               {
+                "name": "Choppa",
+                "option_id": "e542-78f9-46d8-6c33",
+                "options": [],
+                "link_id": "6e34-5e0b-f267-40f5",
+                "uid": "sz9bz8r",
+                "amount": 1
+               },
+               {
+                "name": "Slugga",
+                "option_id": "e71d-1472-87d-b4fa",
+                "options": [],
+                "link_id": "f678-5f8a-c349-16d2",
+                "uid": "szfsf2t",
+                "amount": 1
+               }
+              ],
+              "uid": "suervy",
+              "amount": 9
+             }
+            ],
+            "uid": "str3dcr"
+           }
+          ],
+          "link_id": "187-93d6-1ac7-dbde",
+          "uid": "stptdvo",
+          "amount": 1
+         }
+        ],
+        "link_id": "b3ba-1e1a-a92d-60d2",
+        "uid": "p3ubj7"
+       },
+       {
+        "name": "Infantry",
+        "option_id": "cf47-a0d7-7207-29dc",
+        "options": [
+         {
+          "name": "Gretchin",
+          "option_id": "de8f-24f9-c543-92b7",
+          "options": [
+           {
+            "name": "Unit Composition",
+            "option_id": "816f-2188-7c92-19d",
+            "options": [
+             {
+              "name": "1 Runtherd and 10 Gretchin",
+              "option_id": "d682-30b9-55d8-8445",
+              "options": [
+               {
+                "name": "Gretchin",
+                "option_id": "43dd-f974-3fc8-8abc",
+                "options": [
+                 {
+                  "name": "Close combat weapon",
+                  "option_id": "8df-71e4-ccf5-99e8",
+                  "options": [],
+                  "link_id": "ddd5-9e62-3a60-66d6",
+                  "uid": "ooq9w6n",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Grot blasta",
+                  "option_id": "140d-7163-8a11-81c5",
+                  "options": [],
+                  "link_id": "7908-6506-f654-5aeb",
+                  "uid": "oogi5h",
+                  "amount": 1
+                 }
+                ],
+                "uid": "on8p0un",
+                "amount": 10
+               },
+               {
+                "name": "Runtherd",
+                "option_id": "552d-6c0d-80e8-ac32",
+                "options": [
+                 {
+                  "name": "Grot-smacka",
+                  "option_id": "66fc-b1fe-a869-b8ef",
+                  "options": [],
+                  "uid": "ophyhal",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Slugga",
+                  "option_id": "752e-cd9b-4721-f0b0",
+                  "options": [],
+                  "link_id": "da75-95a9-9a18-d139",
+                  "uid": "opvbd0b",
+                  "amount": 1
+                 }
+                ],
+                "link_id": "afc3-494a-6ef9-edb5",
+                "uid": "on82ge9",
+                "amount": 1
+               }
+              ],
+              "uid": "oj1g35p",
+              "amount": 1
+             }
+            ],
+            "uid": "oj8ggff"
+           }
+          ],
+          "link_id": "8e01-6763-69a8-a25a",
+          "uid": "od85cyo",
+          "amount": 1
+         }
+        ],
+        "link_id": "6d77-b79d-3ccb-6bf6",
+        "uid": "p4q2c2g"
+       },
+       {
+        "name": "Mounted",
+        "option_id": "14a0-40c9-2748-ae6e",
+        "options": [
+         {
+          "name": "Squighog Boyz",
+          "option_id": "6a83-8e1f-63ef-50c3",
+          "options": [
+           {
+            "name": "Unit Composition",
+            "option_id": "6e05-cf12-2839-61d9",
+            "options": [
+             {
+              "name": "1 Nob on Smasha Squig and 3 Squighog Boyz",
+              "option_id": "1fba-450a-537b-9db1",
+              "options": [
+               {
+                "name": "Nob on Smasha Squig",
+                "option_id": "99c8-e37d-ae6d-a8ba",
+                "options": [
+                 {
+                  "name": "Big choppa",
+                  "option_id": "aecd-6ba5-5558-fee2",
+                  "options": [],
+                  "uid": "o314baa",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Slugga",
+                  "option_id": "752e-cd9b-4721-f0b0",
+                  "options": [],
+                  "link_id": "cc94-f22e-3842-dc29",
+                  "uid": "o3lhzp",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Squig jaws",
+                  "option_id": "fa30-43a8-57eb-a82e",
+                  "options": [],
+                  "link_id": "1733-d8a5-cb18-5d82",
+                  "uid": "o3q36f",
+                  "amount": 1
+                 }
+                ],
+                "link_id": "966c-c85d-3a7-d23e",
+                "uid": "o3r2oal",
+                "amount": 1
+               },
+               {
+                "name": "Squighog Boy",
+                "option_id": "954d-5938-64d8-597c",
+                "options": [
+                 {
+                  "name": "Saddlegit weapons",
+                  "option_id": "8a8f-5ceb-8a0a-6c6c",
+                  "options": [],
+                  "link_id": "d17f-c006-a95f-fe30",
+                  "uid": "o55a4gj",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Squig jaws",
+                  "option_id": "fa30-43a8-57eb-a82e",
+                  "options": [],
+                  "link_id": "231a-5a1b-25cf-28ed",
+                  "uid": "o5q36c",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Stikka",
+                  "option_id": "5efb-f61f-fdb6-a7d7",
+                  "options": [],
+                  "uid": "o5bm8v",
+                  "amount": 1
+                 }
+                ],
+                "link_id": "19bb-cf43-2176-b8f",
+                "uid": "o3jd05",
+                "amount": 3
+               }
+              ],
+              "uid": "o2a13qi",
+              "amount": 1
+             }
+            ],
+            "uid": "o1grtq"
+           }
+          ],
+          "link_id": "6c12-6df4-9d3a-2cc",
+          "uid": "o09zwqr",
+          "amount": 1
+         },
+         {
+          "name": "Squighog Boyz",
+          "option_id": "6a83-8e1f-63ef-50c3",
+          "options": [
+           {
+            "name": "Unit Composition",
+            "option_id": "6e05-cf12-2839-61d9",
+            "options": [
+             {
+              "name": "1 Nob on Smasha Squig and 3 Squighog Boyz",
+              "option_id": "1fba-450a-537b-9db1",
+              "options": [
+               {
+                "name": "Nob on Smasha Squig",
+                "option_id": "99c8-e37d-ae6d-a8ba",
+                "options": [
+                 {
+                  "name": "Big choppa",
+                  "option_id": "aecd-6ba5-5558-fee2",
+                  "options": [],
+                  "uid": "2gdj2nd",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Slugga",
+                  "option_id": "752e-cd9b-4721-f0b0",
+                  "options": [],
+                  "link_id": "cc94-f22e-3842-dc29",
+                  "uid": "2h0klxl",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Squig jaws",
+                  "option_id": "fa30-43a8-57eb-a82e",
+                  "options": [],
+                  "link_id": "1733-d8a5-cb18-5d82",
+                  "uid": "2g7ykch",
+                  "amount": 1
+                 }
+                ],
+                "link_id": "966c-c85d-3a7-d23e",
+                "uid": "2gy6it",
+                "amount": 1
+               },
+               {
+                "name": "Squighog Boy",
+                "option_id": "954d-5938-64d8-597c",
+                "options": [
+                 {
+                  "name": "Saddlegit weapons",
+                  "option_id": "8a8f-5ceb-8a0a-6c6c",
+                  "options": [],
+                  "link_id": "d17f-c006-a95f-fe30",
+                  "uid": "2ibnbz2",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Squig jaws",
+                  "option_id": "fa30-43a8-57eb-a82e",
+                  "options": [],
+                  "link_id": "231a-5a1b-25cf-28ed",
+                  "uid": "2ihgr8v",
+                  "amount": 1
+                 },
+                 {
+                  "name": "Stikka",
+                  "option_id": "5efb-f61f-fdb6-a7d7",
+                  "options": [],
+                  "uid": "2iymga6",
+                  "amount": 1
+                 }
+                ],
+                "link_id": "19bb-cf43-2176-b8f",
+                "uid": "2gs414j",
+                "amount": 3
+               }
+              ],
+              "uid": "2ffhvp",
+              "amount": 1
+             }
+            ],
+            "uid": "2e52gk6"
+           }
+          ],
+          "link_id": "6c12-6df4-9d3a-2cc",
+          "uid": "2dsptx",
+          "amount": 1
+         }
+        ],
+        "link_id": "6503-057c-cb62-badb",
+        "uid": "p42okffg"
+       }
+      ],
+      "uid": "69l0epb",
+      "catalogue_id": "a55f-b7b3-6c65-a05f"
+     }
+    ],
+    "uid": "67l5xzc5"
+   }
+  ],
+  "uid": "65te37j",
+  "customName": "war horde",
+  "maxCosts": [
+   {
+    "hidden": true,
+    "typeId": "51b2-306e-1021-d207",
+    "name": "pts"
+   },
+   {
+    "hidden": true,
+    "typeId": "b03b-c239-15a5-da55",
+    "name": "Crusade Points"
+   },
+   {
+    "hidden": true,
+    "typeId": "75bb-ded1-c86d-bdf0",
+    "name": "Crusade: Battle Honours"
+   },
+   {
+    "hidden": true,
+    "typeId": "a623-fe74-1d33-cddf",
+    "name": "Crusade: Experience"
+   },
+   {
+    "hidden": true,
+    "typeId": "716d-91b7-d55a-1022",
+    "name": "Crusade: Weapon Modifications"
+   },
+   {
+    "hidden": true,
+    "typeId": "ac6b-ced3-9b5e-9a6e",
+    "name": "Blackstone Fragments"
+   },
+   {
+    "hidden": true,
+    "typeId": "82ae-1066-5107-6ae0",
+    "name": "Detachment Points"
+   },
+   {
+    "hidden": true,
+    "typeId": "f759-1bc4-cb3a-f0d2",
+    "name": "Enhancements"
+   }
+  ]
+ },
+ "totalCosts": [
+  {
+   "name": "pts",
+   "value": 950,
+   "typeId": "51b2-306e-1021-d207"
+  }
+ ],
+ "date_mod": "2026-07-13T10:14:35.616Z",
+ "metadata": {
+  "builder_settings": {},
+  "custom_categories": [],
+  "custom_view": false,
+  "play_mode": false,
+  "leaders": {
+   "9a7vk5a": [],
+   "bclrr0l": []
+  }
+ },
+ "books_revision": [
+  "Xenos - Orks: 2",
+  "Unaligned Forces: 1"
+ ]
+}
