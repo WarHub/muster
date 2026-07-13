@@ -217,6 +217,25 @@ expectations are wrong) is never masked by, or confused with, environment
 problems (missing data, crashes). CI should treat exit code `2` as "needs
 attention" but distinct from a red build on `1`.
 
+### How the GitHub Action surfaces exit code 2
+
+The published Action (`entrypoint.sh`) maps exit code `2` to a **green**
+check: it prints a `::warning::` annotation and then exits `0`, rather than
+propagating the inconclusive status as a failing check. This is deliberate —
+it's the "abstain, don't lie" design: muster would rather stay silent (green)
+about something it couldn't actually verify than paint an environment or
+harness problem the same red as a genuine data regression.
+
+The consequence is worth knowing before you rely on it: a PR that, say,
+deletes a data-catalogue entry that a fixture references will make that
+fixture's run inconclusive, not failed — the check goes green with only a
+`::warning::` line in the job log (and in `GITHUB_STEP_SUMMARY`). Nothing
+blocks the merge. Maintainers should get in the habit of scanning Action logs
+for `::warning::muster run was inconclusive` rather than assuming a green
+check means every fixture actually ran and passed. A `fail-on-inconclusive`
+Action input (to let a repo opt into treating exit code `2` as red) is a
+planned follow-up, not yet implemented.
+
 ## Worked example
 
 `necrons-single-unit-cost.yaml` (from `wh40k-11e/tests/rosters/`), in full:

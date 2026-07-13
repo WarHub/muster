@@ -90,8 +90,9 @@ Total specs: 401; specs with explicit wham expectation: 0
 i.e. **zero** spec files anywhere in the suite currently carry an `engines: wham: ...`
 entry (verified independently with a plain case-insensitive `grep -ri wham` over
 `specs/`, which also returned 0 hits). Every spec in the suite defaults to
-"expected pass" for wham. By contrast, 38 roster spec files carry explicit
-`newrecruit:` overrides (fail/skip), so the annotation mechanism is exercised and
+"expected pass" for wham. By contrast, 36 roster spec files carry 48 explicit
+`newrecruit:` overrides — 47 of them per-engine `expectedState` overrides and
+exactly 1 a `newrecruit: skip` — so the annotation mechanism is exercised and
 working — wham genuinely has none right now, not because the field is unused.
 
 This wasn't always true. wham's own history shows the opposite state at earlier
